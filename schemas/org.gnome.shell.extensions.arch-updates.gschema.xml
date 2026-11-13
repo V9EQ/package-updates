@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.arch-updates" path="/org/gnome/shell/extensions/arch-updates/">
+    <key name="panel-position" type="s">
+      <choices>
+        <choice value="left"/>
+        <choice value="center"/>
+        <choice value="right"/>
+      </choices>
+      <default>'right'</default>
+      <summary>Top bar position</summary>
+      <description>Place the indicator on the left, in the center or on the right of the top bar.</description>
+    </key>
+    <key name="refresh-interval" type="i">
+      <range min="1" max="1440"/>
+      <default>5</default>
+      <summary>Check interval in minutes</summary>
+      <description>How often to check available updates and out-of-date reports.</description>
+    </key>
+  </schema>
+</schemalist>

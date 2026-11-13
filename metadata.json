@@ -1,0 +1,9 @@
+{
+    "uuid": "arch-updates@v9eq.github.io",
+    "name": "Arch Updates",
+    "description": "Show available pacman updates and out-of-date Arch Linux package bases in the top bar. Configurable refresh interval and panel position. Out-of-date reports cover all Arch repositories, not just installed packages. Requires pacman-contrib; AUR is not included.",
+    "url": "https://github.com/V9EQ/arch-updates",
+    "shell-version": ["51"],
+    "settings-schema": "org.gnome.shell.extensions.arch-updates",
+    "version-name": "1.0.0"
+}

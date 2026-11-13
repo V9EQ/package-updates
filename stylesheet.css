@@ -1,0 +1,28 @@
+.arch-updates-counters {
+    spacing: 12px;
+}
+
+.arch-updates-counter {
+    spacing: 4px;
+}
+
+.arch-updates-count {
+    min-width: 1em;
+}
+
+.arch-updates-heading {
+    font-weight: bold;
+}
+
+.arch-updates-menu .popup-menu-item {
+    max-width: 40em;
+}
+
+.arch-updates-status {
+    font-size: 0.9em;
+    max-width: 36em;
+}
+
+.arch-updates-error {
+    color: #f6c477;
+}
