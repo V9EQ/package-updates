@@ -5,5 +5,5 @@
     "url": "https://github.com/V9EQ/arch-updates",
     "shell-version": ["51"],
     "settings-schema": "org.gnome.shell.extensions.arch-updates",
-    "version-name": "1.0.0"
+    "version-name": "1.1.0"
 }

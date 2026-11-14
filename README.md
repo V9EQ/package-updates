@@ -6,6 +6,7 @@ A GNOME Shell extension that shows available pacman updates and out-of-date Arch
 
 - Two counters: available updates for installed packages and out-of-date package bases across Arch Linux repositories.
 - Automatic checks every 5 minutes, with a configurable interval.
+- Refresh the available-updates counter after package installation, upgrade or removal.
 - Left, center or right top bar placement.
 - Package previews, manual refresh and links to out-of-date reports.
 - Last known counts remain visible when a check fails.
@@ -73,11 +74,15 @@ Open the menu for error details and the last successful check time. Package prev
 
 Available updates are queried asynchronously using `checkupdates --nocolor`. Repository metadata is stored in a separate database under `~/.cache/arch-updates/checkupdates` (or `$XDG_CACHE_HOME/arch-updates/checkupdates`). The system pacman database is not synchronized, and no packages are installed or upgraded.
 
+The installed package database is monitored for changes using the path reported by `pacman-conf DBPath`. After packages change and pacman releases its database lock, the first counter is recalculated with a read-only `pacman -Qu` query. This requires no network access and does not refresh the GitLab counter. Cancelling before any packages are changed does not trigger a refresh. If an update check is already running, a recount is queued so its earlier result cannot overwrite the new count.
+
 Out-of-date reports are fetched through the public GitLab API, with pagination and deduplication by package project. No API token is required.
 
-Checks do not overlap. Disabling the extension removes its timer and indicator, disconnects settings signals, cancels network requests and terminates running checks.
+Checks for the same source do not overlap. Disabling the extension removes its timers, file monitors and indicator, disconnects settings signals, cancels network requests and terminates running checks.
 
 ## Building
+
+Extension files live in `src/`; packaging instructions and project documentation are in the repository root.
 
 ```sh
 make pack

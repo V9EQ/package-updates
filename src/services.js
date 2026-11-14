@@ -28,25 +28,18 @@ export class PackageService {
         this._session.abort();
     }
 
-    async getUpdates() {
-        const checkupdates = GLib.find_program_in_path('checkupdates');
+    async _runCommand(argv, environment = {}) {
         const timeout = GLib.find_program_in_path('timeout');
-        if (!checkupdates)
-            throw new Error('Install pacman-contrib to provide checkupdates.');
         if (!timeout)
             throw new Error('Install coreutils to provide timeout.');
-
-        const database = GLib.build_filenamev([
-            GLib.get_user_cache_dir(), 'arch-updates', 'checkupdates',
-        ]);
         const launcher = new Gio.SubprocessLauncher({
             flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
         });
         launcher.setenv('LC_ALL', 'C', true);
-        // A separate temporary database: never run pacman -Sy on the system DB.
-        launcher.setenv('CHECKUPDATES_DB', database, true);
+        for (const [name, value] of Object.entries(environment))
+            launcher.setenv(name, value, true);
         const process = launcher.spawnv([
-            timeout, '--kill-after=5s', '120s', checkupdates, '--nocolor',
+            timeout, '--kill-after=5s', '120s', ...argv,
         ]);
         this._processes.add(process);
 
@@ -62,21 +55,57 @@ export class PackageService {
                 });
             });
             if (!process.get_if_exited())
-                throw new Error('checkupdates was interrupted.');
+                throw new Error(`${argv[0]} was interrupted.`);
             const status = process.get_exit_status();
-            if (status === 2)
-                return [];
             if (status === 124 || status === 137)
-                throw new Error('checkupdates timed out after 120 seconds.');
-            if (status !== 0)
-                throw new Error(stderr.trim() || `checkupdates failed (exit ${status}).`);
-
-            return stdout.split('\n').map(line => line.trim()).filter(Boolean)
-                .map(line => ({name: line.split(/\s+/)[0], detail: line}))
-                .sort((a, b) => a.name.localeCompare(b.name));
+                throw new Error(`${argv[0]} timed out after 120 seconds.`);
+            return {stdout, stderr, status};
         } finally {
             this._processes.delete(process);
         }
+    }
+
+    _parseUpdates(stdout) {
+        return stdout.split('\n').map(line => line.trim())
+            .filter(line => line && !/\[.*\]/.test(line))
+            .map(line => ({name: line.split(/\s+/)[0], detail: line}))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    async getUpdates() {
+        const checkupdates = GLib.find_program_in_path('checkupdates');
+        if (!checkupdates)
+            throw new Error('Install pacman-contrib to provide checkupdates.');
+        const database = GLib.build_filenamev([
+            GLib.get_user_cache_dir(), 'arch-updates', 'checkupdates',
+        ]);
+        // A separate temporary database: never run pacman -Sy on the system DB.
+        const {stdout, stderr, status} = await this._runCommand(
+            [checkupdates, '--nocolor'], {CHECKUPDATES_DB: database});
+        if (status === 2)
+            return [];
+        if (status !== 0)
+            throw new Error(stderr.trim() || `checkupdates failed (exit ${status}).`);
+        return this._parseUpdates(stdout);
+    }
+
+    async getLocalUpdates() {
+        // A completed transaction already refreshed pacman's own databases.
+        // Query them read-only: no network request or temporary DB sync needed.
+        const {stdout, stderr, status} = await this._runCommand(['pacman', '-Qu']);
+        if (status === 1 && !stdout.trim() && !stderr.trim())
+            return [];
+        if (status !== 0)
+            throw new Error(stderr.trim() || `pacman failed (exit ${status}).`);
+        return this._parseUpdates(stdout);
+    }
+
+    async getDatabasePath() {
+        const {stdout, stderr, status} = await this._runCommand(['pacman-conf', 'DBPath']);
+        const path = stdout.trim();
+        if (status !== 0 || !GLib.path_is_absolute(path))
+            throw new Error(stderr.trim() || 'Could not determine the pacman database path.');
+        return path;
     }
 
     async _getIssuesPage(page) {

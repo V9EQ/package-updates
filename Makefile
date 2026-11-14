@@ -7,11 +7,12 @@ all: pack
 
 pack:
 	mkdir -p dist
-	glib-compile-schemas --strict --dry-run schemas
+	glib-compile-schemas --strict --dry-run src/schemas
 	gnome-extensions pack --force --out-dir=dist \
 		--schema=schemas/$(SCHEMA) \
 		--extra-source=indicator.js --extra-source=services.js \
-		--extra-source=icons --extra-source=LICENSE .
+		--extra-source=monitor.js --extra-source=icons \
+		--extra-source="$(CURDIR)/LICENSE" src
 
 install: pack
 	gnome-extensions install --force dist/$(UUID).shell-extension.zip
