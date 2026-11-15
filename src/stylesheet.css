@@ -19,8 +19,12 @@
 }
 
 .arch-updates-status {
-    font-size: 0.9em;
     max-width: 36em;
+}
+
+.arch-updates-status-row {
+    padding-top: 0;
+    padding-bottom: 4px;
 }
 
 .arch-updates-error {

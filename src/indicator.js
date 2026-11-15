@@ -31,13 +31,13 @@ class UpdatesIndicator extends PanelMenu.Button {
             reactive: false,
             style_class: 'arch-updates-heading',
         }));
-        this._updates = this._addSection('Available pacman updates');
-        this._outdated = this._addSection('Out-of-date in Arch repositories');
+        this._updates = this._addSection('Pacman updates');
+        this._outdated = this._addSection('Outdated packages');
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._refreshItem = this.menu.addAction('Refresh now', refresh, 'view-refresh-symbolic');
-        this.menu.addAction('View all out-of-date reports', () => this._openUri(ISSUES_URL),
+        this.menu.addAction('View reports', () => this._openUri(ISSUES_URL),
             'web-browser-symbolic');
-        this.menu.addAction('Preferences', () => extension.openPreferences(),
+        this.menu.addAction('Open preferences', () => extension.openPreferences(),
             'preferences-system-symbolic');
     }
 
@@ -63,6 +63,7 @@ class UpdatesIndicator extends PanelMenu.Button {
     _addSection(title) {
         const summary = new PopupMenu.PopupMenuItem(title, {reactive: false});
         const status = new PopupMenu.PopupMenuItem('Not checked yet', {reactive: false});
+        status.add_style_class_name('arch-updates-status-row');
         status.label.add_style_class_name('arch-updates-status');
         status.label.clutter_text.line_wrap = true;
         status.label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
@@ -88,15 +89,22 @@ class UpdatesIndicator extends PanelMenu.Button {
         const count = state.items === null ? '—' : `${state.items.length}`;
         widgets.summary.label.text = `${widgets.title}: ${count}`;
         widgets.status.remove_style_class_name('arch-updates-error');
+        widgets.status.label.opacity = state.error ? 255 : 140;
         if (state.error) {
-            const prefix = state.items === null ? 'Unavailable' : 'Stale data';
+            const prefix = state.items === null ? 'Check failed' : 'Stale data';
             widgets.status.label.text = `${prefix}: ${state.error}`;
             widgets.status.add_style_class_name('arch-updates-error');
         } else if (state.updated) {
-            widgets.status.label.text = `Last checked: ${state.updated.toLocaleTimeString('en-GB')}`;
+            widgets.status.label.text = `Last checked: ${state.updated.toLocaleTimeString('en-GB', {
+                hour: '2-digit', minute: '2-digit',
+            })}`;
         } else {
-            widgets.status.label.text = refreshing ? 'Checking…' : 'Not checked yet';
+            widgets.status.label.text = refreshing ? 'Checking packages…' : 'Not checked yet';
         }
+        // Status-only updates must not recreate every package row.
+        if (widgets.items === state.items)
+            return;
+        widgets.items = state.items;
         widgets.preview.menu.removeAll();
         const items = state.items ?? [];
         widgets.preview.visible = items.length > 0;
@@ -109,7 +117,7 @@ class UpdatesIndicator extends PanelMenu.Button {
         }
         if (items.length > PREVIEW_LIMIT) {
             widgets.preview.menu.addMenuItem(new PopupMenu.PopupMenuItem(
-                `${items.length - PREVIEW_LIMIT} more packages (preview limited to ${PREVIEW_LIMIT})`,
+                `${items.length - PREVIEW_LIMIT} more packages`,
                 {reactive: false}));
         }
     }
@@ -125,7 +133,7 @@ class UpdatesIndicator extends PanelMenu.Button {
         this._renderSection(this._updates, updates, refreshing);
         this._renderSection(this._outdated, outdated, refreshing);
         this._refreshItem.setSensitive(!refreshing);
-        this._refreshItem.label.text = refreshing ? 'Checking…' : 'Refresh now';
+        this._refreshItem.label.text = refreshing ? 'Checking packages…' : 'Refresh now';
         this.accessible_name = `Arch Updates: ${this._updates.summary.label.text}; ${this._outdated.summary.label.text}`;
     }
 });

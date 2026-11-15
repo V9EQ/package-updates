@@ -4,7 +4,7 @@ A GNOME Shell extension that shows available pacman updates and out-of-date Arch
 
 ## Features
 
-- Two counters: available updates for installed packages and out-of-date package bases across Arch Linux repositories.
+- Two counters: **Pacman updates** for installed packages and **Outdated packages** for package bases across Arch Linux repositories.
 - Automatic checks every 5 minutes, with a configurable interval.
 - Refresh the available-updates counter after package installation, upgrade or removal.
 - Left, center or right top bar placement.
@@ -52,7 +52,7 @@ Preferences are preserved because both versions use the same GSettings schema.
 
 ## Configuration
 
-Open **Preferences** from the indicator menu, or run:
+Select **Open preferences** from the indicator menu, or run:
 
 ```sh
 gnome-extensions prefs arch-updates@v9eq.github.io
