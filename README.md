@@ -1,33 +1,47 @@
-# Arch Updates
+# Package Updates
 
-A GNOME Shell extension that shows available pacman updates and out-of-date Arch Linux packages in the top bar.
+A GNOME Shell extension that shows package update counts for **Arch Linux, Ubuntu, Debian and Fedora**. The distribution and package manager are detected automatically.
 
 ## Features
 
-- Two counters: **Pacman updates** for installed packages and **Outdated packages** for package bases across Arch Linux repositories.
-- Pacman-only mode with outdated-package checks disabled.
-- Automatic checks every 5 minutes, with a configurable interval.
-- Refresh the available-updates counter after package installation, upgrade or removal.
-- Left, center or right top bar placement.
-- Package previews, manual refresh and links to out-of-date reports.
-- Last known counts remain visible when a check fails.
+- Update counts and package previews in the top bar.
+- Configurable check interval; 5 minutes by default.
+- Left, center or right panel placement.
+- Rechecks after installed-package database changes.
+- Optional Arch-only out-of-date package reports.
+- Last-known counts remain visible when a check fails.
 
-The out-of-date counter uses open reports labelled `package::out-of-date` on [Arch Linux GitLab](https://gitlab.archlinux.org/groups/archlinux/packaging/packages/-/issues?state=opened&label_name%5B%5D=package%3A%3Aout-of-date). It covers **all Arch package bases**, not just installed packages. Multiple reports for the same package base count once. An out-of-date report does not necessarily mean an update is available through pacman.
+## Compatibility
 
-AUR packages are not included in either counter.
+GNOME Shell **48–51** is required. Package backends target the following releases; see each module for its exact count and metadata-refresh semantics.
 
-## Requirements
+| Distribution | Reference release | Backend | Documentation |
+| --- | --- | --- | --- |
+| Arch Linux | Rolling | pacman / checkupdates | [Arch module](src/backends/arch/README.md) |
+| Ubuntu | 26.10, 26.04 LTS | APT | [Ubuntu module](src/backends/ubuntu/README.md) |
+| Debian | 13 / trixie | APT | [Debian module](src/backends/debian/README.md) |
+| Fedora Workstation | 45 | DNF5 | [Fedora module](src/backends/fedora/README.md) |
 
-- Arch Linux with GNOME Shell 51
-- `pacman-contrib` and `libsoup3`
-- `coreutils`, including GNU `timeout`
-- `make` for installation from source
+These targets are based on upstream documentation, not runtime verification on every distribution. Related distributions can use `ID_LIKE` fallback on a best-effort basis. Unsupported systems show **Unsupported system**, not a zero count. Fedora Atomic, rpm-ostree/bootc deployments, Snap, Flatpak and AUR updates are outside the supported scope.
 
-```sh
-sudo pacman -S --needed pacman-contrib libsoup3
-```
+**Metadata freshness differs:** Arch refreshes a separate database; APT reads existing indexes maintained by the OS or administrator; DNF5 follows its metadata-expiration policy. A five-minute check interval does not mean APT indexes are refreshed every five minutes.
 
 ## Installation
+
+Install the dependencies for your distribution:
+
+```sh
+# Arch Linux
+sudo pacman -S --needed pacman-contrib libsoup3 make
+
+# Ubuntu / Debian
+sudo apt install apt gir1.2-soup-3.0 libglib2.0-bin make
+
+# Fedora Workstation
+sudo dnf install dnf5 rpm libsoup3 glib2 make
+```
+
+GNU coreutils, GJS, GTK 4, libadwaita and the GNOME extension tools must also be available. They are normally present in a GNOME installation. Fedora requires a DNF5 version supporting `check-upgrade --json`; there is no DNF4 fallback.
 
 ```sh
 git clone https://github.com/V9EQ/arch-updates.git
@@ -41,83 +55,94 @@ Log out and back in, then enable the extension:
 gnome-extensions enable arch-updates@v9eq.github.io
 ```
 
-### Upgrading from the local version
+### Upgrading an existing installation
 
-If `arch-updates@aboba.local` is installed, disable it before enabling the new version to avoid duplicate indicators:
+The display name changed from **Arch Updates** to **Package Updates**. The UUID and GSettings schema are unchanged, so existing preferences are retained. Re-run `make install` and log out and back in to load changed JavaScript.
+
+If the earlier private UUID `arch-updates@aboba.local` is still enabled, disable it to avoid duplicate indicators:
 
 ```sh
 gnome-extensions disable arch-updates@aboba.local
 ```
 
-Preferences are preserved because both versions use the same GSettings schema.
-
 ## Configuration
 
-Select **Open preferences** from the indicator menu, or run:
+Select **Open preferences** from the menu, or run:
 
 ```sh
 gnome-extensions prefs arch-updates@v9eq.github.io
 ```
 
-The default refresh interval is 5 minutes; the supported range is 1–1440 minutes. Panel placement changes take effect immediately.
+- **Top bar position:** left, center or right.
+- **Check interval (minutes):** 1–1440; default 5.
+- **Outdated packages:** Arch-based systems only. Disabling it hides the second counter and reports action and cancels GitLab requests. Re-enabling starts a check immediately.
 
-Turn off **Outdated packages** to check only pacman updates. This hides the second counter, its menu section and **View reports**, cancels any active GitLab scan, and stops GitLab requests during automatic and manual refreshes. Pacman checks and transaction monitoring continue unchanged. The option is enabled by default; turning it back on starts a new check immediately. No Shell restart is needed.
+System detection uses `ID`, then ordered `ID_LIKE` values from `os-release` through GLib. An installed package-manager executable alone does not select a backend. Settings changes take effect without restarting Shell.
 
-Panel status:
+## Counts and status
 
-| Symbol | Meaning |
+The primary section is labelled **Pacman updates**, **APT updates** or **DNF updates**. Package previews show up to 15 entries; the counter includes the complete result.
+
+On Arch, **Outdated packages** counts unique package bases with open `package::out-of-date` reports across Arch Linux repositories, not just installed packages. This indicates lag behind upstream, not necessarily an upgrade available through pacman. Arch reports are never queried on Ubuntu, Debian or Fedora.
+
+| Status | Meaning |
 | --- | --- |
 | `…` | No result yet |
-| `!` | Check failed without an earlier result |
-| `*` after a count | Last known result; the latest check failed |
+| `!` | Unavailable without an earlier result |
+| `*` after a count | Last-known count; the latest check failed |
+| `Sync failed` | No successful result is available |
+| `Sync failed · cached data` | Previous results are retained |
+| `Unsupported system` | No applicable backend is available |
 
-The menu shows `Sync failed` if no successful result is available, or `Sync failed · cached data` when the last known count is retained. Technical details are written to the journal, not displayed in the menu. Repeated identical failures are logged once per source until a check succeeds.
+Technical error details go to the journal. Repeated identical failures are logged once per source until a check succeeds.
 
-Open the menu for sync status and the last successful check time. Package previews show up to 15 entries; the counters include all results.
+## Safety and resource use
 
-## How it works
+The extension does not install, remove or upgrade packages, run privileged commands, or alter repository, network or desktop configuration. APT checks are simulations and do not refresh system indexes. Arch and DNF5 may download repository metadata to user caches, never package archives.
 
-Available updates are queried asynchronously using `checkupdates --nocolor`. Repository metadata is stored in a separate database under `~/.cache/arch-updates/checkupdates` (or `$XDG_CACHE_HOME/arch-updates/checkupdates`). The system pacman database is not synchronized, and no packages are installed or upgraded.
+Commands run asynchronously with a 120-second limit and a 5-second termination grace period. Source checks do not overlap. Database notifications are coalesced; Arch waits for its transaction lock, while APT/RPM notifications can occur during a long transaction and schedule another read after later writes. Disabling removes timers and file monitors, cancels HTTP requests and terminates outstanding commands.
 
-The installed package database is monitored for changes using the path reported by `pacman-conf DBPath`. After packages change and pacman releases its database lock, the first counter is recalculated with a read-only `pacman -Qu` query. This requires no network access and does not refresh the GitLab counter. Cancelling before any packages are changed does not trigger a refresh. If an update check is already running, a recount is queued so its earlier result cannot overwrite the new count.
-
-Out-of-date reports are fetched through the public GitLab API, with pagination and deduplication by package project. No API token is required.
-
-Checks for the same source do not overlap. Disabling the extension removes its timers, file monitors and indicator, disconnects settings signals, cancels network requests and terminates running checks.
-
-## Building
-
-Extension files live in `src/`; packaging instructions and project documentation are in the repository root.
+## Build and repository layout
 
 ```sh
 make pack
 ```
 
-The bundle is written to `dist/arch-updates@v9eq.github.io.shell-extension.zip`.
-
-To install a bundle manually:
+The bundle is `dist/arch-updates@v9eq.github.io.shell-extension.zip`. Install it manually with:
 
 ```sh
 gnome-extensions install --force dist/arch-updates@v9eq.github.io.shell-extension.zip
 ```
 
-## Uninstalling
+```text
+src/             Runtime JavaScript, metadata and Shell stylesheet
+  backends/      Distribution adapters and their README files
+icons/           Symbolic SVGs and icon license
+schemas/         GSettings XML
+.build/          Generated runtime staging directory (ignored)
+dist/            Generated ZIP (ignored)
+docs/            Architecture and upstream references
+```
+
+The archive contains `extension.js`, `metadata.json`, `prefs.js`, `icons/` and `schemas/` at its root, as expected by GNOME. The extension installer compiles schemas automatically. Backend README files are not bundled. See [Architecture](docs/architecture.md) and [Contributing](CONTRIBUTING.md) for implementation details.
+
+## Troubleshooting and removal
+
+Include your distribution, GNOME Shell version, backend command output and relevant logs when filing an [issue](https://github.com/V9EQ/arch-updates/issues):
+
+```sh
+journalctl -b _COMM=gnome-shell | grep 'Package Updates:'
+```
+
+Review logs before sharing them, especially when using private repositories. For APT, check that repository indexes have been refreshed normally; for Fedora, confirm DNF5 JSON support and repository availability.
+
+To remove:
 
 ```sh
 gnome-extensions disable arch-updates@v9eq.github.io
 gnome-extensions uninstall arch-updates@v9eq.github.io
 ```
 
-## Issues
-
-Report bugs at [GitHub Issues](https://github.com/V9EQ/arch-updates/issues), including your GNOME Shell version and any relevant logs:
-
-```sh
-journalctl -b _COMM=gnome-shell
-```
-
 ## License
 
-Code is licensed under [GPL-2.0-or-later](LICENSE).
-
-Icons are from [Lucide](https://lucide.dev/), distributed under ISC/MIT terms. See [icons/LICENSE](icons/LICENSE).
+Code: [GPL-2.0-or-later](LICENSE). Icons: [Lucide](https://lucide.dev/), under the terms in [icons/LICENSE](icons/LICENSE).
