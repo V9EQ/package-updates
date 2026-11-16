@@ -1,9 +1,9 @@
 {
     "uuid": "arch-updates@v9eq.github.io",
-    "name": "Arch Updates",
-    "description": "Show available pacman updates and optional out-of-date Arch Linux package bases in the top bar. Configurable refresh interval and panel position. Out-of-date reports cover all Arch repositories, not just installed packages. Requires pacman-contrib; AUR is not included.",
+    "name": "Package Updates",
+    "description": "Show package updates on Arch Linux, Ubuntu, Debian and Fedora with automatic system detection. Configurable check interval and panel position. Optional Arch-only out-of-date reports. AUR, Snap, Flatpak and image-based systems are not included.",
     "url": "https://github.com/V9EQ/arch-updates",
-    "shell-version": ["51"],
+    "shell-version": ["48", "49", "50", "51"],
     "settings-schema": "org.gnome.shell.extensions.arch-updates",
-    "version-name": "1.3.0"
+    "version-name": "2.0.0"
 }

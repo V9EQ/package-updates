@@ -12,7 +12,14 @@ export default class ArchUpdatesExtension extends Extension {
         this._settings = this.getSettings();
         this._service = new PackageService();
         this._showOutdated = this._service.supportsOutdated && this._settings.get_boolean('show-outdated');
-        this._updates = {items: null, error: null, updated: null, busy: false};
+        this._updates = {
+            items: null,
+            error: this._service.supported ? null : this._service.system.reason,
+            updated: null,
+            busy: false,
+        };
+        if (!this._service.supported)
+            console.warn(`${this.metadata.name}: ${this._updates.error}`);
         this._outdated = {items: null, error: null, updated: null, busy: false};
         this._pendingUpdatesRefresh = false;
         this._settingsSignals = [
@@ -22,12 +29,14 @@ export default class ArchUpdatesExtension extends Extension {
         ];
         this._placeIndicator();
         this._startTimer();
-        this._watchTransactions();
+        this._watchPackageChanges();
         this._refresh();
     }
 
-    async _watchTransactions() {
+    async _watchPackageChanges() {
         const service = this._service;
+        if (!service.supported)
+            return;
         try {
             const monitor = await service.watchChanges(() => this._refreshSource('updates', true));
             if (this._service !== service) {
@@ -37,7 +46,7 @@ export default class ArchUpdatesExtension extends Extension {
             this._monitor = monitor;
         } catch (error) {
             if (this._service === service)
-                console.warn(`Arch Updates: transaction monitoring unavailable: ${error.message}`);
+                console.warn(`${this.metadata.name}: database monitoring unavailable: ${error.message}`);
         }
     }
 
@@ -56,7 +65,11 @@ export default class ArchUpdatesExtension extends Extension {
 
     _placeIndicator() {
         this._indicator?.destroy();
-        this._indicator = new UpdatesIndicator(this, () => this._refresh(), this._showOutdated);
+        this._indicator = new UpdatesIndicator(this, () => this._refresh(), {
+            showOutdated: this._showOutdated,
+            updatesTitle: this._service.updatesTitle,
+            supported: this._service.supported,
+        });
         const position = this._settings.get_string('panel-position');
         Main.panel.addToStatusArea(this.uuid, this._indicator,
             position === 'right' ? 0 : -1, position);
@@ -79,21 +92,23 @@ export default class ArchUpdatesExtension extends Extension {
     }
 
     _refresh() {
+        if (!this._service?.supported)
+            return;
         this._refreshSource('updates');
         if (this._showOutdated)
             this._refreshSource('outdated');
     }
 
     async _refreshSource(source, local = false) {
-        if (!this._service || (source === 'outdated' && !this._showOutdated))
+        if (!this._service?.supported || (source === 'outdated' && !this._showOutdated))
             return;
         const service = this._service;
         const state = source === 'updates' ? this._updates : this._outdated;
         const isCurrent = () => this._service === service &&
             state === (source === 'updates' ? this._updates : this._outdated);
         if (state.busy) {
-            // A transaction may finish during checkupdates. Recount afterwards
-            // so its older result cannot overwrite the post-install count.
+            // Database changes during a running query require another read so
+            // an older result cannot remain visible after packages change.
             if (local)
                 this._pendingUpdatesRefresh = true;
             return;
@@ -117,7 +132,7 @@ export default class ArchUpdatesExtension extends Extension {
             // once per source until a successful check clears the error.
             const detail = error?.message || String(error);
             if (state.error !== detail)
-                console.warn(`Arch Updates: ${source} sync failed: ${detail}`);
+                console.warn(`${this.metadata.name}: ${source} sync failed: ${detail}`);
             // Keep the last successful result, clearly marked as stale.
             state.error = detail;
         } finally {

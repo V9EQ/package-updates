@@ -14,13 +14,13 @@
     <key name="show-outdated" type="b">
       <default>true</default>
       <summary>Outdated packages</summary>
-      <description>Show the out-of-date counter and check Arch GitLab. Disable to check only pacman updates.</description>
+      <description>Show the out-of-date counter and check Arch GitLab on Arch-based systems. Ignored on other distributions.</description>
     </key>
     <key name="refresh-interval" type="i">
       <range min="1" max="1440"/>
       <default>5</default>
       <summary>Check interval in minutes</summary>
-      <description>How often to check available updates and out-of-date reports.</description>
+      <description>How often to query package updates and supported out-of-date reports.</description>
     </key>
   </schema>
 </schemalist>

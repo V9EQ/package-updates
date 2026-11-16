@@ -14,9 +14,10 @@ const PREVIEW_LIMIT = 15;
 
 export const UpdatesIndicator = GObject.registerClass(
 class UpdatesIndicator extends PanelMenu.Button {
-    _init(extension, refresh, showOutdated = true) {
-        super._init(0.5, 'Arch Updates');
+    _init(extension, refresh, {showOutdated = false, updatesTitle = 'Package updates', supported = true} = {}) {
+        super._init(0.5, extension.metadata.name);
         this._extension = extension;
+        this._supported = supported;
         this.menu.actor.add_style_class_name('arch-updates-menu');
 
         const box = new St.BoxLayout({
@@ -27,11 +28,11 @@ class UpdatesIndicator extends PanelMenu.Button {
         this._outdatedLabel = showOutdated ? this._addCounter(box, 'outdated') : null;
         this.add_child(box);
 
-        this.menu.addMenuItem(new PopupMenu.PopupMenuItem('Arch Updates', {
+        this.menu.addMenuItem(new PopupMenu.PopupMenuItem(extension.metadata.name, {
             reactive: false,
             style_class: 'arch-updates-heading',
         }));
-        this._updates = this._addSection('Pacman updates');
+        this._updates = this._addSection(updatesTitle);
         this._outdated = showOutdated ? this._addSection('Outdated packages') : null;
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._refreshItem = this.menu.addAction('Refresh now', refresh, 'view-refresh-symbolic');
@@ -82,7 +83,7 @@ class UpdatesIndicator extends PanelMenu.Button {
                 try {
                     Gio.AppInfo.launch_default_for_uri_finish(result);
                 } catch (error) {
-                    console.error(`Arch Updates: could not open link: ${error.message}`);
+                    console.error(`${this._extension.metadata.name}: could not open link: ${error.message}`);
                 }
             });
     }
@@ -92,7 +93,10 @@ class UpdatesIndicator extends PanelMenu.Button {
         widgets.summary.label.text = `${widgets.title}: ${count}`;
         widgets.status.remove_style_class_name('arch-updates-error');
         widgets.status.label.opacity = state.error ? 255 : 140;
-        if (state.error) {
+        if (!this._supported) {
+            widgets.status.label.text = 'Unsupported system';
+            widgets.status.add_style_class_name('arch-updates-error');
+        } else if (state.error) {
             widgets.status.label.text = state.items === null
                 ? 'Sync failed'
                 : 'Sync failed · cached data';
@@ -137,9 +141,9 @@ class UpdatesIndicator extends PanelMenu.Button {
             this._outdatedLabel.text = label(outdated);
             this._renderSection(this._outdated, outdated, refreshing);
         }
-        this._refreshItem.setSensitive(!refreshing);
+        this._refreshItem.setSensitive(this._supported && !refreshing);
         this._refreshItem.label.text = refreshing ? 'Checking packages…' : 'Refresh now';
         const outdatedSummary = this._outdated ? `; ${this._outdated.summary.label.text}` : '';
-        this.accessible_name = `Arch Updates: ${this._updates.summary.label.text}${outdatedSummary}`;
+        this.accessible_name = `${this._extension.metadata.name}: ${this._updates.summary.label.text}${outdatedSummary}`;
     }
 });

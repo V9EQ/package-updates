@@ -18,6 +18,10 @@ export class PackageService {
         this._backend = Backend ? new Backend(this._runner) : null;
     }
 
+    get supported() {
+        return this._backend !== null;
+    }
+
     get supportsOutdated() {
         return Boolean(this._backend?.outdated);
     }

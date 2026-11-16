@@ -5,9 +5,12 @@ import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+import {detectSystem} from './platform.js';
+
 export default class ArchUpdatesPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        window.set_default_size(480, 400);
+        const supportsOutdated = detectSystem().backendId === 'arch';
+        window.set_default_size(480, supportsOutdated ? 400 : 320);
         const settings = this.getSettings();
         // Retain settings for the lifetime of the preferences window.
         window._settings = settings;
@@ -46,8 +49,10 @@ export default class ArchUpdatesPreferences extends ExtensionPreferences {
         polling.add(interval);
         settings.bind('refresh-interval', interval, 'value', Gio.SettingsBindFlags.DEFAULT);
 
-        const outdated = new Adw.SwitchRow({title: 'Outdated packages'});
-        polling.add(outdated);
-        settings.bind('show-outdated', outdated, 'active', Gio.SettingsBindFlags.DEFAULT);
+        if (supportsOutdated) {
+            const outdated = new Adw.SwitchRow({title: 'Outdated packages'});
+            polling.add(outdated);
+            settings.bind('show-outdated', outdated, 'active', Gio.SettingsBindFlags.DEFAULT);
+        }
     }
 }
