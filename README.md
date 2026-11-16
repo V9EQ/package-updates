@@ -68,7 +68,9 @@ Panel status:
 | `!` | Check failed without an earlier result |
 | `*` after a count | Last known result; the latest check failed |
 
-Open the menu for error details and the last successful check time. Package previews show up to 15 entries; the counters include all results.
+The menu shows `Sync failed` if no successful result is available, or `Sync failed · cached data` when the last known count is retained. Technical details are written to the journal, not displayed in the menu. Repeated identical failures are logged once per source until a check succeeds.
+
+Open the menu for sync status and the last successful check time. Package previews show up to 15 entries; the counters include all results.
 
 ## How it works
 

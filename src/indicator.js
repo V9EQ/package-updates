@@ -91,8 +91,9 @@ class UpdatesIndicator extends PanelMenu.Button {
         widgets.status.remove_style_class_name('arch-updates-error');
         widgets.status.label.opacity = state.error ? 255 : 140;
         if (state.error) {
-            const prefix = state.items === null ? 'Check failed' : 'Stale data';
-            widgets.status.label.text = `${prefix}: ${state.error}`;
+            widgets.status.label.text = state.items === null
+                ? 'Sync failed'
+                : 'Sync failed · cached data';
             widgets.status.add_style_class_name('arch-updates-error');
         } else if (state.updated) {
             widgets.status.label.text = `Last checked: ${state.updated.toLocaleTimeString('en-GB', {

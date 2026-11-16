@@ -95,8 +95,13 @@ export default class ArchUpdatesExtension extends Extension {
         } catch (error) {
             if (this._service !== service)
                 return;
+            // Keep technical details out of the menu. Log each distinct failure
+            // once per source until a successful check clears the error.
+            const detail = error?.message || String(error);
+            if (state.error !== detail)
+                console.warn(`Arch Updates: ${source} sync failed: ${detail}`);
             // Keep the last successful result, clearly marked as stale.
-            state.error = error.message;
+            state.error = detail;
         } finally {
             if (this._service === service) {
                 state.busy = false;
