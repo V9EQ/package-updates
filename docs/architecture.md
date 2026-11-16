@@ -13,7 +13,7 @@ Documentation reviewed on 2026-11-16. This is a source-based compatibility targe
 
 Target GNOME Shell versions are 48–51: Debian 13 ships GNOME 48, and current Ubuntu/Fedora releases ship GNOME 51. Older GNOME releases are outside this change. Traditional package-based Fedora is supported; rpm-ostree/image-based variants are not.
 
-The project is **Package Updates** at [V9EQ/package-updates](https://github.com/V9EQ/package-updates), with UUID `package-updates@v9eq.github.io` and schema ID `org.gnome.shell.extensions.package-updates`. Settings are stored under `/org/gnome/shell/extensions/package-updates/`. Migration from the previous Arch Updates identity requires copying the old settings and removing the old UUID; see the main README.
+The project is **Package Updates** at [V9EQ/package-updates](https://github.com/V9EQ/package-updates), with UUID `package-updates@v9eq.github.io` and schema ID `org.gnome.shell.extensions.package-updates`. Settings are stored under `/org/gnome/shell/extensions/package-updates/`.
 
 ## Implementation boundaries
 

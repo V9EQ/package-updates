@@ -49,26 +49,11 @@ cd package-updates
 make install
 ```
 
-For a fresh installation, log out and back in, then enable the extension. If upgrading from an old UUID, follow the migration steps below first:
+Log out and back in, then enable the extension:
 
 ```sh
 gnome-extensions enable package-updates@v9eq.github.io
 ```
-
-### Migrating from Arch Updates
-
-The extension UUID is now `package-updates@v9eq.github.io`, and the settings schema is `org.gnome.shell.extensions.package-updates`. GNOME treats this as a different extension, so old preferences are not transferred automatically.
-
-If the `dconf` command is available, back up and transfer the old settings before removing the old installation:
-
-```sh
-dconf dump /org/gnome/shell/extensions/arch-updates/ > /tmp/arch-updates-settings.dconf
-dconf load /org/gnome/shell/extensions/package-updates/ < /tmp/arch-updates-settings.dconf
-gnome-extensions disable arch-updates@v9eq.github.io
-gnome-extensions uninstall arch-updates@v9eq.github.io
-```
-
-If you used the earlier private UUID `arch-updates@aboba.local`, disable and uninstall that UUID as well. Install the new bundle with `make install`, log out and back in, and enable `package-updates@v9eq.github.io`. Without `dconf`, reapply your preferences in the new settings window. The old checkupdates cache is no longer used; the new cache is under `$XDG_CACHE_HOME/package-updates/checkupdates`.
 
 ## Configuration
 
