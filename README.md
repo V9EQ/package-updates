@@ -44,8 +44,8 @@ sudo dnf install dnf5 rpm libsoup3 glib2 make
 GNU coreutils, GJS, GTK 4, libadwaita and the GNOME extension tools must also be available. They are normally present in a GNOME installation. Fedora requires a DNF5 version supporting `check-upgrade --json`; there is no DNF4 fallback.
 
 ```sh
-git clone https://github.com/V9EQ/arch-updates.git
-cd arch-updates
+git clone https://github.com/V9EQ/package-updates.git
+cd package-updates
 make install
 ```
 
@@ -57,7 +57,7 @@ gnome-extensions enable arch-updates@v9eq.github.io
 
 ### Upgrading an existing installation
 
-The display name changed from **Arch Updates** to **Package Updates**. The UUID and GSettings schema are unchanged, so existing preferences are retained. Re-run `make install` and log out and back in to load changed JavaScript.
+The display name changed from **Arch Updates** to **Package Updates**, and the repository is now `V9EQ/package-updates`. The legacy UUID and GSettings schema are unchanged, so existing preferences are retained. Re-run `make install` and log out and back in to load changed JavaScript.
 
 If the earlier private UUID `arch-updates@aboba.local` is still enabled, disable it to avoid duplicate indicators:
 
@@ -128,7 +128,7 @@ The archive contains `extension.js`, `metadata.json`, `prefs.js`, `icons/` and `
 
 ## Troubleshooting and removal
 
-Include your distribution, GNOME Shell version, backend command output and relevant logs when filing an [issue](https://github.com/V9EQ/arch-updates/issues):
+Include your distribution, GNOME Shell version, backend command output and relevant logs when filing an [issue](https://github.com/V9EQ/package-updates/issues):
 
 ```sh
 journalctl -b _COMM=gnome-shell | grep 'Package Updates:'

@@ -13,7 +13,7 @@ Documentation reviewed on 2026-11-16. This is a source-based compatibility targe
 
 Target GNOME Shell versions are 48–51: Debian 13 ships GNOME 48, and current Ubuntu/Fedora releases ship GNOME 51. Older GNOME releases are outside this change. Traditional package-based Fedora is supported; rpm-ostree/image-based variants are not.
 
-The public display name will become **Package Updates**. The existing extension UUID, repository URL, schema ID and settings path stay unchanged to preserve installations and preferences.
+The public display name becomes **Package Updates** and the repository is renamed to [V9EQ/package-updates](https://github.com/V9EQ/package-updates). The existing extension UUID, schema ID and settings path stay unchanged to preserve installations and preferences.
 
 ## Implementation boundaries
 
@@ -42,6 +42,7 @@ Backend README files are development documentation and should not be included in
 3. Add Ubuntu/Debian APT and Fedora DNF5 adapters.
 4. Connect detection, capabilities and database monitoring to the interface and preferences.
 5. Complete uniform documentation and validate syntax, schemas and archive layout.
+6. Rename the GitHub repository, refresh About/topics and project URLs, and push the completed stages.
 
 Commit each stage separately. Do not add tests unless explicitly requested. Syntax checking and packaging are not a claim that another OS was run. Do not install packages, refresh the host's system package indexes, change network settings or launch a separate Shell session as part of this work.
 
