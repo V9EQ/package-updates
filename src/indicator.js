@@ -12,17 +12,17 @@ import {ISSUES_URL} from './services.js';
 
 const PREVIEW_LIMIT = 15;
 
-export const UpdatesIndicator = GObject.registerClass(
+export const UpdatesIndicator = GObject.registerClass({GTypeName: 'V9eqPackageUpdatesIndicator'},
 class UpdatesIndicator extends PanelMenu.Button {
     _init(extension, refresh, {showOutdated = false, updatesTitle = 'Package updates', supported = true} = {}) {
         super._init(0.5, extension.metadata.name);
         this._extension = extension;
         this._supported = supported;
-        this.menu.actor.add_style_class_name('arch-updates-menu');
+        this.menu.actor.add_style_class_name('package-updates-menu');
 
         const box = new St.BoxLayout({
             orientation: Clutter.Orientation.HORIZONTAL,
-            style_class: 'arch-updates-counters',
+            style_class: 'package-updates-counters',
         });
         this._updatesLabel = this._addCounter(box, 'updates');
         this._outdatedLabel = showOutdated ? this._addCounter(box, 'outdated') : null;
@@ -30,7 +30,7 @@ class UpdatesIndicator extends PanelMenu.Button {
 
         this.menu.addMenuItem(new PopupMenu.PopupMenuItem(extension.metadata.name, {
             reactive: false,
-            style_class: 'arch-updates-heading',
+            style_class: 'package-updates-heading',
         }));
         this._updates = this._addSection(updatesTitle);
         this._outdated = showOutdated ? this._addSection('Outdated packages') : null;
@@ -47,7 +47,7 @@ class UpdatesIndicator extends PanelMenu.Button {
     _addCounter(box, name) {
         const group = new St.BoxLayout({
             orientation: Clutter.Orientation.HORIZONTAL,
-            style_class: 'arch-updates-counter',
+            style_class: 'package-updates-counter',
         });
         group.add_child(new St.Icon({
             gicon: Gio.icon_new_for_string(`${this._extension.path}/icons/${name}-symbolic.svg`),
@@ -56,7 +56,7 @@ class UpdatesIndicator extends PanelMenu.Button {
         const label = new St.Label({
             text: '…',
             y_align: Clutter.ActorAlign.CENTER,
-            style_class: 'arch-updates-count',
+            style_class: 'package-updates-count',
         });
         group.add_child(label);
         box.add_child(group);
@@ -66,8 +66,8 @@ class UpdatesIndicator extends PanelMenu.Button {
     _addSection(title) {
         const summary = new PopupMenu.PopupMenuItem(title, {reactive: false});
         const status = new PopupMenu.PopupMenuItem('Not checked yet', {reactive: false});
-        status.add_style_class_name('arch-updates-status-row');
-        status.label.add_style_class_name('arch-updates-status');
+        status.add_style_class_name('package-updates-status-row');
+        status.label.add_style_class_name('package-updates-status');
         status.label.clutter_text.line_wrap = true;
         status.label.clutter_text.ellipsize = Pango.EllipsizeMode.NONE;
         const preview = new PopupMenu.PopupSubMenuMenuItem('Package details');
@@ -91,16 +91,16 @@ class UpdatesIndicator extends PanelMenu.Button {
     _renderSection(widgets, state, refreshing) {
         const count = state.items === null ? '—' : `${state.items.length}`;
         widgets.summary.label.text = `${widgets.title}: ${count}`;
-        widgets.status.remove_style_class_name('arch-updates-error');
+        widgets.status.remove_style_class_name('package-updates-error');
         widgets.status.label.opacity = state.error ? 255 : 140;
         if (!this._supported) {
             widgets.status.label.text = 'Unsupported system';
-            widgets.status.add_style_class_name('arch-updates-error');
+            widgets.status.add_style_class_name('package-updates-error');
         } else if (state.error) {
             widgets.status.label.text = state.items === null
                 ? 'Sync failed'
                 : 'Sync failed · cached data';
-            widgets.status.add_style_class_name('arch-updates-error');
+            widgets.status.add_style_class_name('package-updates-error');
         } else if (state.updated) {
             widgets.status.label.text = `Last checked: ${state.updated.toLocaleTimeString('en-GB', {
                 hour: '2-digit', minute: '2-digit',

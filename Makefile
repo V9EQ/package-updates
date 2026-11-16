@@ -1,5 +1,5 @@
-UUID := arch-updates@v9eq.github.io
-SCHEMA := org.gnome.shell.extensions.arch-updates.gschema.xml
+UUID := package-updates@v9eq.github.io
+SCHEMA := org.gnome.shell.extensions.package-updates.gschema.xml
 STAGE := $(CURDIR)/.build/extension
 EXTRA_JS := $(filter-out extension.js prefs.js,$(notdir $(wildcard src/*.js)))
 

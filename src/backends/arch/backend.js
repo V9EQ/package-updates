@@ -23,7 +23,7 @@ export class ArchBackend {
         if (!GLib.find_program_in_path('checkupdates'))
             throw new Error('Install pacman-contrib to provide checkupdates.');
         const database = GLib.build_filenamev([
-            GLib.get_user_cache_dir(), 'arch-updates', 'checkupdates',
+            GLib.get_user_cache_dir(), 'package-updates', 'checkupdates',
         ]);
         const {stdout, stderr, status} = await this._runner.run(
             ['checkupdates', '--nocolor'], {CHECKUPDATES_DB: database});

@@ -1,32 +1,32 @@
-.arch-updates-counters {
+.package-updates-counters {
     spacing: 12px;
 }
 
-.arch-updates-counter {
+.package-updates-counter {
     spacing: 4px;
 }
 
-.arch-updates-count {
+.package-updates-count {
     min-width: 1em;
 }
 
-.arch-updates-heading {
+.package-updates-heading {
     font-weight: bold;
 }
 
-.arch-updates-menu .popup-menu-item {
+.package-updates-menu .popup-menu-item {
     max-width: 40em;
 }
 
-.arch-updates-status {
+.package-updates-status {
     max-width: 36em;
 }
 
-.arch-updates-status-row {
+.package-updates-status-row {
     padding-top: 0;
     padding-bottom: 4px;
 }
 
-.arch-updates-error {
+.package-updates-error {
     color: #f6c477;
 }

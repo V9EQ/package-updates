@@ -7,7 +7,7 @@ import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/ex
 
 import {detectSystem} from './platform.js';
 
-export default class ArchUpdatesPreferences extends ExtensionPreferences {
+export default class PackageUpdatesPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const supportsOutdated = detectSystem().backendId === 'arch';
         window.set_default_size(480, supportsOutdated ? 400 : 320);

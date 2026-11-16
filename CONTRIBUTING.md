@@ -45,13 +45,13 @@ find src -type f -name '*.js' -print
 node --input-type=module --check < src/extension.js
 make pack
 git diff --check
-unzip -l dist/arch-updates@v9eq.github.io.shell-extension.zip
+unzip -l dist/package-updates@v9eq.github.io.shell-extension.zip
 ```
 
 Do not change desktop/network settings, launch an extra GNOME Shell session, or install packages without explicit permission. Commit each completed implementation stage separately. Do not amend published commits or push without an explicit request.
 
 ## Compatibility and packaging
 
-Keep the legacy UUID and schema path unless a deliberate migration is approved. Resource directories may live outside `src/` in the repository, but installed `icons/` and `schemas/` must remain at archive root. The Makefile stages runtime files under `.build/extension`; generated files are ignored.
+Keep UUID `package-updates@v9eq.github.io` and the `/org/gnome/shell/extensions/package-updates/` schema path unless a further migration is explicitly approved. Resource directories may live outside `src/` in the repository, but installed `icons/` and `schemas/` must remain at archive root. The Makefile stages runtime files under `.build/extension`; generated files are ignored.
 
 Only declare Shell versions supported by the APIs actually used. Consult the corresponding upstream porting guides when widening that range. Keep GTK/Adwaita imports in preferences, and St/Clutter imports in Shell code.

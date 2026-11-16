@@ -23,7 +23,7 @@ Regular checks:
 checkupdates --nocolor
 ```
 
-`CHECKUPDATES_DB` is set to `$XDG_CACHE_HOME/arch-updates/checkupdates`, defaulting to `~/.cache/arch-updates/checkupdates`. Exit 0 contains updates, 2 means no updates, and other statuses are errors.
+`CHECKUPDATES_DB` is set to `$XDG_CACHE_HOME/package-updates/checkupdates`, defaulting to `~/.cache/package-updates/checkupdates`. Exit 0 contains updates, 2 means no updates, and other statuses are errors.
 
 After an installed-package change:
 

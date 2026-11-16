@@ -49,28 +49,33 @@ cd package-updates
 make install
 ```
 
-Log out and back in, then enable the extension:
+For a fresh installation, log out and back in, then enable the extension. If upgrading from an old UUID, follow the migration steps below first:
 
 ```sh
-gnome-extensions enable arch-updates@v9eq.github.io
+gnome-extensions enable package-updates@v9eq.github.io
 ```
 
-### Upgrading an existing installation
+### Migrating from Arch Updates
 
-The display name changed from **Arch Updates** to **Package Updates**, and the repository is now `V9EQ/package-updates`. The legacy UUID and GSettings schema are unchanged, so existing preferences are retained. Re-run `make install` and log out and back in to load changed JavaScript.
+The extension UUID is now `package-updates@v9eq.github.io`, and the settings schema is `org.gnome.shell.extensions.package-updates`. GNOME treats this as a different extension, so old preferences are not transferred automatically.
 
-If the earlier private UUID `arch-updates@aboba.local` is still enabled, disable it to avoid duplicate indicators:
+If the `dconf` command is available, back up and transfer the old settings before removing the old installation:
 
 ```sh
-gnome-extensions disable arch-updates@aboba.local
+dconf dump /org/gnome/shell/extensions/arch-updates/ > /tmp/arch-updates-settings.dconf
+dconf load /org/gnome/shell/extensions/package-updates/ < /tmp/arch-updates-settings.dconf
+gnome-extensions disable arch-updates@v9eq.github.io
+gnome-extensions uninstall arch-updates@v9eq.github.io
 ```
+
+If you used the earlier private UUID `arch-updates@aboba.local`, disable and uninstall that UUID as well. Install the new bundle with `make install`, log out and back in, and enable `package-updates@v9eq.github.io`. Without `dconf`, reapply your preferences in the new settings window. The old checkupdates cache is no longer used; the new cache is under `$XDG_CACHE_HOME/package-updates/checkupdates`.
 
 ## Configuration
 
 Select **Open preferences** from the menu, or run:
 
 ```sh
-gnome-extensions prefs arch-updates@v9eq.github.io
+gnome-extensions prefs package-updates@v9eq.github.io
 ```
 
 - **Top bar position:** left, center or right.
@@ -108,10 +113,10 @@ Commands run asynchronously with a 120-second limit and a 5-second termination g
 make pack
 ```
 
-The bundle is `dist/arch-updates@v9eq.github.io.shell-extension.zip`. Install it manually with:
+The bundle is `dist/package-updates@v9eq.github.io.shell-extension.zip`. Install it manually with:
 
 ```sh
-gnome-extensions install --force dist/arch-updates@v9eq.github.io.shell-extension.zip
+gnome-extensions install --force dist/package-updates@v9eq.github.io.shell-extension.zip
 ```
 
 ```text
@@ -139,8 +144,8 @@ Review logs before sharing them, especially when using private repositories. For
 To remove:
 
 ```sh
-gnome-extensions disable arch-updates@v9eq.github.io
-gnome-extensions uninstall arch-updates@v9eq.github.io
+gnome-extensions disable package-updates@v9eq.github.io
+gnome-extensions uninstall package-updates@v9eq.github.io
 ```
 
 ## License

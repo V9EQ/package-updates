@@ -7,7 +7,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {UpdatesIndicator} from './indicator.js';
 import {PackageService} from './services.js';
 
-export default class ArchUpdatesExtension extends Extension {
+export default class PackageUpdatesExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._service = new PackageService();

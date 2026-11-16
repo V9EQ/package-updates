@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <schema id="org.gnome.shell.extensions.arch-updates" path="/org/gnome/shell/extensions/arch-updates/">
+  <schema id="org.gnome.shell.extensions.package-updates" path="/org/gnome/shell/extensions/package-updates/">
     <key name="panel-position" type="s">
       <choices>
         <choice value="left"/>
