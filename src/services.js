@@ -1,189 +1,60 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
-import Soup from 'gi://Soup?version=3.0';
+import {CommandRunner} from './command.js';
+import {detectSystem} from './platform.js';
+import {ArchBackend} from './backends/arch/backend.js';
 
-export const ISSUES_URL = 'https://gitlab.archlinux.org/groups/archlinux/packaging/packages/-/issues?state=opened&label_name%5B%5D=package%3A%3Aout-of-date';
-const API_URL = 'https://gitlab.archlinux.org/api/v4/groups/archlinux%2Fpackaging%2Fpackages/issues';
-const PACKAGE_URL_PREFIX = 'https://gitlab.archlinux.org/archlinux/packaging/packages/';
+export {ISSUES_URL} from './backends/arch/outdated.js';
 
 export class PackageService {
     constructor() {
-        this._cancellable = new Gio.Cancellable();
-        this._outdatedCancellable = new Gio.Cancellable();
-        this._processes = new Set();
-        this._session = null;
+        this.system = detectSystem();
+        this._runner = new CommandRunner();
+        this._backend = this.system.backendId === 'arch' ? new ArchBackend(this._runner) : null;
     }
 
-    destroy() {
-        // GNU timeout forwards TERM to checkupdates and its pacman children.
-        // Killing only the shell running checkupdates would orphan those children.
-        for (const process of this._processes)
-            process.send_signal(15);
-        this._processes.clear();
-        this._cancellable.cancel();
-        this._outdatedCancellable.cancel();
-        this._session?.abort();
-        this._session = null;
+    get supportsOutdated() {
+        return Boolean(this._backend?.outdated);
+    }
+
+    get updatesTitle() {
+        return this._backend?.updatesTitle || 'Package updates';
+    }
+
+    _requireBackend() {
+        if (!this._backend)
+            throw new Error(this.system.reason || `Backend unavailable: ${this.system.name}`);
+        return this._backend;
+    }
+
+    getUpdates() {
+        return this._requireBackend().getUpdates();
+    }
+
+    getLocalUpdates() {
+        return this._requireBackend().getUpdates({local: true});
+    }
+
+    getDatabasePath() {
+        return this._requireBackend().getDatabasePath();
+    }
+
+    watchChanges(onChanged) {
+        return this._requireBackend().watchChanges(onChanged);
+    }
+
+    getOutdated() {
+        const backend = this._requireBackend();
+        if (!backend.outdated)
+            throw new Error('Out-of-date reports are only available on Arch Linux.');
+        return backend.outdated.getPackages();
     }
 
     cancelOutdated() {
-        // GitLab requests must be cancellable without interrupting pacman.
-        this._outdatedCancellable.cancel();
-        this._outdatedCancellable = new Gio.Cancellable();
-        this._session?.abort();
-        this._session = null;
+        this._backend?.outdated?.cancel();
     }
 
-    async _runCommand(argv, environment = {}) {
-        const timeout = GLib.find_program_in_path('timeout');
-        if (!timeout)
-            throw new Error('Install coreutils to provide timeout.');
-        const launcher = new Gio.SubprocessLauncher({
-            flags: Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE,
-        });
-        launcher.setenv('LC_ALL', 'C', true);
-        for (const [name, value] of Object.entries(environment))
-            launcher.setenv(name, value, true);
-        const process = launcher.spawnv([
-            timeout, '--kill-after=5s', '120s', ...argv,
-        ]);
-        this._processes.add(process);
-
-        try {
-            const [stdout, stderr] = await new Promise((resolve, reject) => {
-                process.communicate_utf8_async(null, this._cancellable, (source, result) => {
-                    try {
-                        const [, out, err] = source.communicate_utf8_finish(result);
-                        resolve([out, err]);
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-            });
-            if (!process.get_if_exited())
-                throw new Error(`${argv[0]} was interrupted.`);
-            const status = process.get_exit_status();
-            if (status === 124 || status === 137)
-                throw new Error(`${argv[0]} timed out after 120 seconds.`);
-            return {stdout, stderr, status};
-        } finally {
-            this._processes.delete(process);
-        }
-    }
-
-    _parseUpdates(stdout) {
-        return stdout.split('\n').map(line => line.trim())
-            .filter(line => line && !/\[.*\]/.test(line))
-            .map(line => ({name: line.split(/\s+/)[0], detail: line}))
-            .sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    async getUpdates() {
-        const checkupdates = GLib.find_program_in_path('checkupdates');
-        if (!checkupdates)
-            throw new Error('Install pacman-contrib to provide checkupdates.');
-        const database = GLib.build_filenamev([
-            GLib.get_user_cache_dir(), 'arch-updates', 'checkupdates',
-        ]);
-        // A separate temporary database: never run pacman -Sy on the system DB.
-        const {stdout, stderr, status} = await this._runCommand(
-            [checkupdates, '--nocolor'], {CHECKUPDATES_DB: database});
-        if (status === 2)
-            return [];
-        if (status !== 0)
-            throw new Error(stderr.trim() || `checkupdates failed (exit ${status}).`);
-        return this._parseUpdates(stdout);
-    }
-
-    async getLocalUpdates() {
-        // A completed transaction already refreshed pacman's own databases.
-        // Query them read-only: no network request or temporary DB sync needed.
-        const {stdout, stderr, status} = await this._runCommand(['pacman', '-Qu']);
-        if (status === 1 && !stdout.trim() && !stderr.trim())
-            return [];
-        if (status !== 0)
-            throw new Error(stderr.trim() || `pacman failed (exit ${status}).`);
-        return this._parseUpdates(stdout);
-    }
-
-    async getDatabasePath() {
-        const {stdout, stderr, status} = await this._runCommand(['pacman-conf', 'DBPath']);
-        const path = stdout.trim();
-        if (status !== 0 || !GLib.path_is_absolute(path))
-            throw new Error(stderr.trim() || 'Could not determine the pacman database path.');
-        return path;
-    }
-
-    async _getIssuesPage(page, session, cancellable) {
-        const url = `${API_URL}?state=opened&labels=package%3A%3Aout-of-date&per_page=100&page=${page}&order_by=created_at&sort=asc`;
-        const message = Soup.Message.new('GET', url);
-        message.request_headers.append('Accept', 'application/json');
-        const bytes = await new Promise((resolve, reject) => {
-            session.send_and_read_async(message, GLib.PRIORITY_DEFAULT,
-                cancellable, (source, result) => {
-                    try {
-                        resolve(source.send_and_read_finish(result));
-                    } catch (error) {
-                        reject(error);
-                    }
-                });
-        });
-        if (message.status_code === 429)
-            throw new Error('GitLab rate limit reached. Try again later.');
-        if (message.status_code !== 200)
-            throw new Error(`GitLab returned HTTP ${message.status_code}.`);
-        if (!message.response_headers.get_content_type()?.[0]?.includes('json'))
-            throw new Error('GitLab returned a non-JSON response (possibly bot protection).');
-
-        const issues = JSON.parse(new TextDecoder().decode(bytes.get_data()));
-        if (!Array.isArray(issues))
-            throw new Error('GitLab returned an invalid issues response.');
-        const next = message.response_headers.get_one('x-next-page');
-        return {issues, next};
-    }
-
-    async getOutdated() {
-        if (!this._session) {
-            this._session = new Soup.Session({
-                user_agent: 'ArchUpdates/1.0 (GNOME Shell extension)',
-                timeout: 30,
-                idle_timeout: 15,
-            });
-        }
-        // Capture both objects so a cancelled scan cannot use a new scan's token.
-        const session = this._session;
-        const cancellable = this._outdatedCancellable;
-        // Count unique package bases (GitLab projects), not duplicate issues.
-        // Fetch every page; x-total counts issues, not package bases.
-        const packages = new Map();
-        let page = 1;
-        const deadline = GLib.get_monotonic_time() + 120 * GLib.USEC_PER_SEC;
-        for (let requests = 0; requests < 100; requests++) {
-            if (GLib.get_monotonic_time() > deadline)
-                throw new Error('GitLab check timed out; refusing a partial count.');
-            const {issues, next} = await this._getIssuesPage(page, session, cancellable);
-            for (const issue of issues) {
-                if (!Number.isInteger(issue.project_id) ||
-                    typeof issue.web_url !== 'string' ||
-                    !issue.web_url.startsWith(PACKAGE_URL_PREFIX))
-                    throw new Error('GitLab returned an invalid package issue.');
-                const path = issue.web_url.slice(PACKAGE_URL_PREFIX.length);
-                const name = decodeURIComponent(path.split('/')[0]);
-                packages.set(issue.project_id, {
-                    name,
-                    detail: `${name}: ${issue.title}`,
-                    url: issue.web_url,
-                });
-            }
-            // GitLab normally supplies x-next-page; tolerate its absence.
-            if (next === '' || (next === null && issues.length < 100))
-                return [...packages.values()].sort((a, b) => a.name.localeCompare(b.name));
-            const nextPage = next === null ? page + 1 : Number(next);
-            if (!Number.isInteger(nextPage) || nextPage <= page)
-                throw new Error('GitLab returned invalid pagination.');
-            page = nextPage;
-        }
-        throw new Error('GitLab pagination limit reached; refusing a partial count.');
+    destroy() {
+        this._backend?.destroy();
+        this._runner.destroy();
     }
 }
