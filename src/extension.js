@@ -6,13 +6,12 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 import {UpdatesIndicator} from './indicator.js';
 import {PackageService} from './services.js';
-import {Monitor} from './monitor.js';
 
 export default class ArchUpdatesExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
         this._service = new PackageService();
-        this._showOutdated = this._settings.get_boolean('show-outdated');
+        this._showOutdated = this._service.supportsOutdated && this._settings.get_boolean('show-outdated');
         this._updates = {items: null, error: null, updated: null, busy: false};
         this._outdated = {items: null, error: null, updated: null, busy: false};
         this._pendingUpdatesRefresh = false;
@@ -30,11 +29,12 @@ export default class ArchUpdatesExtension extends Extension {
     async _watchTransactions() {
         const service = this._service;
         try {
-            const path = await service.getDatabasePath();
-            if (this._service !== service)
+            const monitor = await service.watchChanges(() => this._refreshSource('updates', true));
+            if (this._service !== service) {
+                monitor.destroy();
                 return;
-            this._monitor = new Monitor(path,
-                () => this._refreshSource('updates', true));
+            }
+            this._monitor = monitor;
         } catch (error) {
             if (this._service === service)
                 console.warn(`Arch Updates: transaction monitoring unavailable: ${error.message}`);
@@ -42,7 +42,7 @@ export default class ArchUpdatesExtension extends Extension {
     }
 
     _onOutdatedChanged() {
-        const showOutdated = this._settings.get_boolean('show-outdated');
+        const showOutdated = this._service.supportsOutdated && this._settings.get_boolean('show-outdated');
         if (showOutdated === this._showOutdated)
             return;
         this._showOutdated = showOutdated;

@@ -2,6 +2,11 @@
 import {CommandRunner} from './command.js';
 import {detectSystem} from './platform.js';
 import {ArchBackend} from './backends/arch/backend.js';
+import {UbuntuBackend} from './backends/ubuntu/backend.js';
+import {DebianBackend} from './backends/debian/backend.js';
+import {FedoraBackend} from './backends/fedora/backend.js';
+
+const BACKENDS = {arch: ArchBackend, ubuntu: UbuntuBackend, debian: DebianBackend, fedora: FedoraBackend};
 
 export {ISSUES_URL} from './backends/arch/outdated.js';
 
@@ -9,7 +14,8 @@ export class PackageService {
     constructor() {
         this.system = detectSystem();
         this._runner = new CommandRunner();
-        this._backend = this.system.backendId === 'arch' ? new ArchBackend(this._runner) : null;
+        const Backend = BACKENDS[this.system.backendId];
+        this._backend = Backend ? new Backend(this._runner) : null;
     }
 
     get supportsOutdated() {
@@ -32,10 +38,6 @@ export class PackageService {
 
     getLocalUpdates() {
         return this._requireBackend().getUpdates({local: true});
-    }
-
-    getDatabasePath() {
-        return this._requireBackend().getDatabasePath();
     }
 
     watchChanges(onChanged) {
