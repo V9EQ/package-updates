@@ -10,12 +10,9 @@ const PACKAGE_URL_PREFIX = 'https://gitlab.archlinux.org/archlinux/packaging/pac
 export class PackageService {
     constructor() {
         this._cancellable = new Gio.Cancellable();
+        this._outdatedCancellable = new Gio.Cancellable();
         this._processes = new Set();
-        this._session = new Soup.Session({
-            user_agent: 'ArchUpdates/1.0 (GNOME Shell extension)',
-            timeout: 30,
-            idle_timeout: 15,
-        });
+        this._session = null;
     }
 
     destroy() {
@@ -25,7 +22,17 @@ export class PackageService {
             process.send_signal(15);
         this._processes.clear();
         this._cancellable.cancel();
-        this._session.abort();
+        this._outdatedCancellable.cancel();
+        this._session?.abort();
+        this._session = null;
+    }
+
+    cancelOutdated() {
+        // GitLab requests must be cancellable without interrupting pacman.
+        this._outdatedCancellable.cancel();
+        this._outdatedCancellable = new Gio.Cancellable();
+        this._session?.abort();
+        this._session = null;
     }
 
     async _runCommand(argv, environment = {}) {
@@ -108,15 +115,15 @@ export class PackageService {
         return path;
     }
 
-    async _getIssuesPage(page) {
+    async _getIssuesPage(page, session, cancellable) {
         const url = `${API_URL}?state=opened&labels=package%3A%3Aout-of-date&per_page=100&page=${page}&order_by=created_at&sort=asc`;
         const message = Soup.Message.new('GET', url);
         message.request_headers.append('Accept', 'application/json');
         const bytes = await new Promise((resolve, reject) => {
-            this._session.send_and_read_async(message, GLib.PRIORITY_DEFAULT,
-                this._cancellable, (session, result) => {
+            session.send_and_read_async(message, GLib.PRIORITY_DEFAULT,
+                cancellable, (source, result) => {
                     try {
-                        resolve(session.send_and_read_finish(result));
+                        resolve(source.send_and_read_finish(result));
                     } catch (error) {
                         reject(error);
                     }
@@ -137,6 +144,16 @@ export class PackageService {
     }
 
     async getOutdated() {
+        if (!this._session) {
+            this._session = new Soup.Session({
+                user_agent: 'ArchUpdates/1.0 (GNOME Shell extension)',
+                timeout: 30,
+                idle_timeout: 15,
+            });
+        }
+        // Capture both objects so a cancelled scan cannot use a new scan's token.
+        const session = this._session;
+        const cancellable = this._outdatedCancellable;
         // Count unique package bases (GitLab projects), not duplicate issues.
         // Fetch every page; x-total counts issues, not package bases.
         const packages = new Map();
@@ -145,7 +162,7 @@ export class PackageService {
         for (let requests = 0; requests < 100; requests++) {
             if (GLib.get_monotonic_time() > deadline)
                 throw new Error('GitLab check timed out; refusing a partial count.');
-            const {issues, next} = await this._getIssuesPage(page);
+            const {issues, next} = await this._getIssuesPage(page, session, cancellable);
             for (const issue of issues) {
                 if (!Number.isInteger(issue.project_id) ||
                     typeof issue.web_url !== 'string' ||

@@ -5,6 +5,7 @@ A GNOME Shell extension that shows available pacman updates and out-of-date Arch
 ## Features
 
 - Two counters: **Pacman updates** for installed packages and **Outdated packages** for package bases across Arch Linux repositories.
+- Pacman-only mode with outdated-package checks disabled.
 - Automatic checks every 5 minutes, with a configurable interval.
 - Refresh the available-updates counter after package installation, upgrade or removal.
 - Left, center or right top bar placement.
@@ -59,6 +60,8 @@ gnome-extensions prefs arch-updates@v9eq.github.io
 ```
 
 The default refresh interval is 5 minutes; the supported range is 1–1440 minutes. Panel placement changes take effect immediately.
+
+Turn off **Outdated packages** to check only pacman updates. This hides the second counter, its menu section and **View reports**, cancels any active GitLab scan, and stops GitLab requests during automatic and manual refreshes. Pacman checks and transaction monitoring continue unchanged. The option is enabled by default; turning it back on starts a new check immediately. No Shell restart is needed.
 
 Panel status:
 

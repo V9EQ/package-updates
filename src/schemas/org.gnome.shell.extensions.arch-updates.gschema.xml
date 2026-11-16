@@ -11,6 +11,11 @@
       <summary>Top bar position</summary>
       <description>Place the indicator on the left, in the center or on the right of the top bar.</description>
     </key>
+    <key name="show-outdated" type="b">
+      <default>true</default>
+      <summary>Outdated packages</summary>
+      <description>Show the out-of-date counter and check Arch GitLab. Disable to check only pacman updates.</description>
+    </key>
     <key name="refresh-interval" type="i">
       <range min="1" max="1440"/>
       <default>5</default>
