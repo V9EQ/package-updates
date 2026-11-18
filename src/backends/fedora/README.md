@@ -34,7 +34,7 @@ DNF documents status 100 when updates exist and 0 when none exist. JSON-mode imp
 
 ## Metadata freshness
 
-Unprivileged DNF5 uses its user cache, normally `~/.cache/libdnf5`, and may clone readable root metadata. Regular checks follow DNF's metadata-expiration configuration and may download expired/missing metadata. They do not force a repository refresh every five minutes. Post-change checks use cache only. Missing/unavailable enabled repositories are not silently skipped.
+Unprivileged DNF5 uses its user cache, normally `~/.cache/libdnf5`, and may clone readable root metadata. Regular checks follow DNF's metadata-expiration configuration and may download expired/missing metadata. They do not force a repository refresh on every check. Post-change checks use cache only. Missing/unavailable enabled repositories are not silently skipped.
 
 ## Change detection
 

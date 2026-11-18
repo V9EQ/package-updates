@@ -5,7 +5,7 @@ A GNOME Shell extension that shows package update counts for **Arch Linux, Ubunt
 ## Features
 
 - Update counts and package previews in the top bar.
-- Configurable check interval; 5 minutes by default.
+- Configurable check interval; 30 minutes by default.
 - Left, center or right panel placement.
 - Rechecks after installed-package database changes.
 - Optional Arch-only out-of-date package reports.
@@ -24,7 +24,7 @@ GNOME Shell **48–51** is required. Package backends target the following relea
 
 These targets are based on upstream documentation, not runtime verification on every distribution. Related distributions can use `ID_LIKE` fallback on a best-effort basis. Unsupported systems show **Unsupported system**, not a zero count. Fedora Atomic, rpm-ostree/bootc deployments, Snap, Flatpak and AUR updates are outside the supported scope.
 
-**Metadata freshness differs:** Arch refreshes a separate database; APT reads existing indexes maintained by the OS or administrator; DNF5 follows its metadata-expiration policy. A five-minute check interval does not mean APT indexes are refreshed every five minutes.
+**Metadata freshness differs:** Arch refreshes a separate database; APT reads existing indexes maintained by the OS or administrator; DNF5 follows its metadata-expiration policy. Changing the check interval does not refresh APT indexes.
 
 ## Installation
 
@@ -64,7 +64,7 @@ gnome-extensions prefs package-updates@v9eq.github.io
 ```
 
 - **Top bar position:** left, center or right.
-- **Check interval (minutes):** 1–1440; default 5.
+- **Check interval (minutes):** 1–1440; default 30.
 - **Outdated packages:** Arch-based systems only. Disabling it hides the second counter and reports action and cancels GitLab requests. Re-enabling starts a check immediately.
 
 System detection uses `ID`, then ordered `ID_LIKE` values from `os-release` through GLib. An installed package-manager executable alone does not select a backend. Settings changes take effect without restarting Shell.

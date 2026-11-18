@@ -28,7 +28,7 @@ These commands do not update indexes or install packages. The first verifies tha
 
 ## Metadata freshness
 
-Counts reflect existing APT indexes. The extension never runs `sudo apt update`, invokes an authentication dialog, or starts a distribution upgrade. Index freshness depends on Ubuntu's normal update services or administrator actions. The five-minute setting controls how often indexes are queried, not how often the repositories are synchronized.
+Counts reflect existing APT indexes. The extension never runs `sudo apt update`, invokes an authentication dialog, or starts a distribution upgrade. Index freshness depends on Ubuntu's normal update services or administrator actions. The check interval controls how often indexes are queried, not how often the repositories are synchronized.
 
 ## Change detection
 
