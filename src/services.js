@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import {CommandRunner} from './command.js';
-import {detectSystem} from './platform.js';
+import {detectSystem, hasFlatpak} from './platform.js';
 import {ArchBackend} from './backends/arch/backend.js';
 import {UbuntuBackend} from './backends/ubuntu/backend.js';
 import {DebianBackend} from './backends/debian/backend.js';
 import {FedoraBackend} from './backends/fedora/backend.js';
+import {FlatpakService} from './backends/flatpak/backend.js';
 
 const BACKENDS = {arch: ArchBackend, ubuntu: UbuntuBackend, debian: DebianBackend, fedora: FedoraBackend};
 
@@ -16,6 +17,7 @@ export class PackageService {
         this._runner = new CommandRunner();
         const Backend = BACKENDS[this.system.backendId];
         this._backend = Backend ? new Backend(this._runner) : null;
+        this._flatpak = hasFlatpak() ? new FlatpakService() : null;
     }
 
     get supported() {
@@ -28,6 +30,10 @@ export class PackageService {
 
     get supportsAur() {
         return Boolean(this._backend?.aur);
+    }
+
+    get supportsFlatpak() {
+        return this._flatpak !== null;
     }
 
     get updatesTitle() {
@@ -74,7 +80,18 @@ export class PackageService {
         this._backend?.aur?.cancel();
     }
 
+    getFlatpakUpdates() {
+        if (!this._flatpak)
+            throw new Error('Flatpak is not installed.');
+        return this._flatpak.getPackages();
+    }
+
+    cancelFlatpak() {
+        this._flatpak?.cancel();
+    }
+
     destroy() {
+        this._flatpak?.destroy();
         this._backend?.destroy();
         this._runner.destroy();
     }

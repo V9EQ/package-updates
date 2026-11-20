@@ -3,6 +3,10 @@ import GLib from 'gi://GLib';
 
 const BACKENDS = ['arch', 'ubuntu', 'debian', 'fedora'];
 
+export function hasFlatpak() {
+    return Boolean(GLib.find_program_in_path('flatpak'));
+}
+
 export function detectSystem() {
     // GLib implements os-release quoting and /etc vs /usr/lib precedence.
     const id = GLib.get_os_info('ID') || 'linux';
