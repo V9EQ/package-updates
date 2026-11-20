@@ -27,7 +27,6 @@ class UpdatesIndicator extends PanelMenu.Button {
             style_class: 'package-updates-counters',
         });
         this._updatesLabel = this._addCounter(box, 'updates');
-        this._aurLabel = showAur ? this._addCounter(box, 'aur') : null;
         this._outdatedLabel = showOutdated ? this._addCounter(box, 'outdated') : null;
         this.add_child(box);
 
@@ -134,17 +133,17 @@ class UpdatesIndicator extends PanelMenu.Button {
     }
 
     render({updates, outdated, aur}, refreshing) {
-        const label = state => {
-            if (state.items === null)
-                return state.error ? '!' : '…';
-            return `${state.items.length}${state.error ? '*' : ''}`;
+        const label = (...states) => {
+            const failed = states.some(state => state.error);
+            if (states.some(state => state.items === null))
+                return failed ? '!' : '…';
+            const count = states.reduce((sum, state) => sum + state.items.length, 0);
+            return `${count}${failed ? '*' : ''}`;
         };
-        this._updatesLabel.text = label(updates);
+        this._updatesLabel.text = this._aur ? label(updates, aur) : label(updates);
         this._renderSection(this._updates, updates, refreshing);
-        if (this._aur) {
-            this._aurLabel.text = label(aur);
+        if (this._aur)
             this._renderSection(this._aur, aur, refreshing);
-        }
         if (this._outdated) {
             this._outdatedLabel.text = label(outdated);
             this._renderSection(this._outdated, outdated, refreshing);

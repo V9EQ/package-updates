@@ -23,7 +23,6 @@ The project is **Package Updates** at [V9EQ/package-updates](https://github.com/
 - `services.js`: select the adapter and expose a common service interface to the Shell.
 - `monitor.js`: shared debounced database-change notifications where appropriate. Arch retains lock-aware transaction completion handling. Persistent APT/RPM lock files must not be treated like pacman's removable `db.lck`.
 - Out-of-date GitLab reports and opt-in AUR updates are independent **Arch-only capabilities**. Do not relabel Arch data as Ubuntu, Debian or Fedora data.
-- `backends/arch/aur.js` reads foreign packages through `pacman -Qm`, batches official RPC v5 requests with libsoup, and compares versions with `vercmp`. It owns an independent command runner and cancellable so disabling AUR cannot interrupt repository checks. Local database-change reads reuse in-memory AUR metadata and never access the network; unknown foreign names require a scheduled/manual refresh. AUR metadata is published atomically only after a successful complete check. No AUR helper, JSON utility, PKGBUILD execution or package installation is involved.
 - Preserve independent source cancellation, last-known results, concise error messages and deduplicated diagnostic logs.
 
 APT's simulated upgrade counts planned upgrades of already-installed packages, not held-back packages or newly installed dependencies. It is not a claim that remote indexes were just refreshed. Fedora's count must use DNF5's documented structured output, validate exit codes, and reject unavailable repositories rather than silently count an incomplete result. No apt CLI scraping or DNF4 text fallback.
@@ -64,9 +63,6 @@ Commit each stage separately. Do not add tests unless explicitly requested. Synt
 - [os-release specification](https://www.freedesktop.org/software/systemd/man/latest/os-release.html)
 - [GLib.get_os_info](https://docs.gtk.org/glib/func.get_os_info.html)
 - [checkupdates manual](https://man.archlinux.org/man/checkupdates.8.en)
-- [AUR RPC v5 and limits](https://wiki.archlinux.org/title/Aurweb_RPC_interface) (reviewed 2026-11-20)
-- [vercmp comparison semantics](https://man.archlinux.org/man/vercmp.8.en) (reviewed 2026-11-20)
-- [libsoup asynchronous HTTP](https://libsoup.gnome.org/libsoup-3.0/method.Session.send_and_read_async.html) (reviewed 2026-11-20)
 - [Ubuntu package management](https://ubuntu.com/server/docs/how-to/software/package-management)
 - [Debian apt-get manual](https://manpages.debian.org/trixie/apt/apt-get.8.en.html)
 - [Debian package-management reference](https://www.debian.org/doc/manuals/debian-reference/ch02.en.html)

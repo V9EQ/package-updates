@@ -14,8 +14,7 @@ Read [the design and upstream references](docs/architecture.md) before changing 
 - Backends expose `updatesTitle`, `getUpdates({local})`, `watchChanges(callback)` and `destroy()`.
 - `getUpdates` resolves to sorted `{name, detail}` entries. `local: true` must not trigger remote metadata downloads.
 - `watchChanges` resolves to an object with a synchronous `destroy()` method. The caller destroys a monitor that arrives after extension shutdown.
-- Optional `outdated` support exposes `getPackages()`, `cancel()` and `destroy()` independently of package queries.
-- Optional `aur` support exposes `getPackages({local})`, `cancel()` and `destroy()` with its own cancellable command runner. Local reads must reuse cached metadata without HTTP; preserve the last-known result if any installed foreign name lacks cache coverage. Never execute downloaded PKGBUILDs or substitute lexical comparison for `vercmp`.
+- Optional `outdated` and `aur` sources expose `getPackages()`, `cancel()` and `destroy()` independently of package queries; AUR also accepts `{local}`.
 - Preserve last-known results on failure, reject partial/unrecognized output, and keep raw diagnostics out of the menu.
 
 Do not use a removable pacman lock-file check for APT or RPM: their locking semantics differ. A file-change notification is not automatically an atomic transaction-completion signal.
