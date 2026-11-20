@@ -26,6 +26,10 @@ export class PackageService {
         return Boolean(this._backend?.outdated);
     }
 
+    get supportsAur() {
+        return Boolean(this._backend?.aur);
+    }
+
     get updatesTitle() {
         return this._backend?.updatesTitle || 'Package updates';
     }
@@ -57,6 +61,17 @@ export class PackageService {
 
     cancelOutdated() {
         this._backend?.outdated?.cancel();
+    }
+
+    getAurUpdates({local = false} = {}) {
+        const backend = this._requireBackend();
+        if (!backend.aur)
+            throw new Error('AUR updates are only available on Arch Linux.');
+        return backend.aur.getPackages({local});
+    }
+
+    cancelAur() {
+        this._backend?.aur?.cancel();
     }
 
     destroy() {
