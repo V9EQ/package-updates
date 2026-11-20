@@ -50,10 +50,7 @@ export default class PackageUpdatesPreferences extends ExtensionPreferences {
         settings.bind('refresh-interval', interval, 'value', Gio.SettingsBindFlags.DEFAULT);
 
         if (supportsOutdated) {
-            const aur = new Adw.SwitchRow({
-                title: 'AUR updates',
-                subtitle: 'Send installed foreign package names to aur.archlinux.org. Does not track new VCS commits.',
-            });
+            const aur = new Adw.SwitchRow({title: 'AUR updates'});
             polling.add(aur);
             settings.bind('show-aur', aur, 'active', Gio.SettingsBindFlags.DEFAULT);
 
