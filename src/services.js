@@ -9,8 +9,6 @@ import {FlatpakService} from './backends/flatpak/backend.js';
 
 const BACKENDS = {arch: ArchBackend, ubuntu: UbuntuBackend, debian: DebianBackend, fedora: FedoraBackend};
 
-export {ISSUES_URL} from './backends/arch/outdated.js';
-
 export class PackageService {
     constructor() {
         this.system = detectSystem();
@@ -22,10 +20,6 @@ export class PackageService {
 
     get supported() {
         return this._backend !== null;
-    }
-
-    get supportsOutdated() {
-        return Boolean(this._backend?.outdated);
     }
 
     get supportsAur() {
@@ -56,17 +50,6 @@ export class PackageService {
 
     watchChanges(onChanged) {
         return this._requireBackend().watchChanges(onChanged);
-    }
-
-    getOutdated() {
-        const backend = this._requireBackend();
-        if (!backend.outdated)
-            throw new Error('Out-of-date reports are only available on Arch Linux.');
-        return backend.outdated.getPackages();
-    }
-
-    cancelOutdated() {
-        this._backend?.outdated?.cancel();
     }
 
     getAurUpdates({local = false} = {}) {

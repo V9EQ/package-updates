@@ -8,14 +8,12 @@ import St from 'gi://St';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import {ISSUES_URL} from './services.js';
-
 const PREVIEW_LIMIT = 15;
 
 export const UpdatesIndicator = GObject.registerClass({GTypeName: 'V9eqPackageUpdatesIndicator'},
 class UpdatesIndicator extends PanelMenu.Button {
     _init(extension, refresh, {
-        showOutdated = false, showAur = false, showFlatpak = false,
+        showAur = false, showFlatpak = false,
         updatesTitle = 'Package updates', supported = true,
     } = {}) {
         super._init(0.5, extension.metadata.name);
@@ -28,7 +26,6 @@ class UpdatesIndicator extends PanelMenu.Button {
             style_class: 'package-updates-counters',
         });
         this._updatesLabel = this._addCounter(box, 'updates');
-        this._outdatedLabel = showOutdated ? this._addCounter(box, 'outdated') : null;
         this.add_child(box);
 
         this.menu.addMenuItem(new PopupMenu.PopupMenuItem(extension.metadata.name, {
@@ -38,13 +35,8 @@ class UpdatesIndicator extends PanelMenu.Button {
         this._updates = this._addSection(updatesTitle);
         this._aur = showAur ? this._addSection('AUR updates') : null;
         this._flatpak = showFlatpak ? this._addSection('Flatpak updates') : null;
-        this._outdated = showOutdated ? this._addSection('Outdated packages') : null;
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._refreshItem = this.menu.addAction('Refresh now', refresh, 'view-refresh-symbolic');
-        if (showOutdated) {
-            this.menu.addAction('View reports', () => this._openUri(ISSUES_URL),
-                'web-browser-symbolic');
-        }
         this.menu.addAction('Open preferences', () => extension.openPreferences(),
             'preferences-system-symbolic');
     }
@@ -134,7 +126,7 @@ class UpdatesIndicator extends PanelMenu.Button {
         }
     }
 
-    render({updates, outdated, aur, flatpak}, refreshing) {
+    render({updates, aur, flatpak}, refreshing) {
         const label = (...states) => {
             const failed = states.some(state => state.error);
             if (states.some(state => state.items === null))
@@ -153,13 +145,9 @@ class UpdatesIndicator extends PanelMenu.Button {
             this._renderSection(this._aur, aur, refreshing);
         if (this._flatpak)
             this._renderSection(this._flatpak, flatpak, refreshing);
-        if (this._outdated) {
-            this._outdatedLabel.text = label(outdated);
-            this._renderSection(this._outdated, outdated, refreshing);
-        }
         this._refreshItem.setSensitive((this._supported || Boolean(this._flatpak)) && !refreshing);
         this._refreshItem.label.text = refreshing ? 'Checking packages…' : 'Refresh now';
-        const summaries = [this._updates, this._aur, this._flatpak, this._outdated]
+        const summaries = [this._updates, this._aur, this._flatpak]
             .filter(Boolean).map(section => section.summary.label.text);
         this.accessible_name = `${this._extension.metadata.name}: ${summaries.join('; ')}`;
     }

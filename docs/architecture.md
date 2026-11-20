@@ -22,7 +22,7 @@ The project is **Package Updates** at [V9EQ/package-updates](https://github.com/
 - `backends/arch`, `backends/ubuntu`, `backends/debian`, `backends/fedora`: distribution adapters with the same public methods and README format. Ubuntu and Debian share an APT implementation under `backends/apt`.
 - `services.js`: select the adapter and expose a common service interface to the Shell.
 - `monitor.js`: shared debounced database-change notifications where appropriate. Arch retains lock-aware transaction completion handling. Persistent APT/RPM lock files must not be treated like pacman's removable `db.lck`.
-- Out-of-date GitLab reports and opt-in AUR updates are independent **Arch-only capabilities**. Do not relabel Arch data as Ubuntu, Debian or Fedora data.
+- Opt-in AUR updates are an **Arch-only capability**.
 - The optional Flatpak source is independent of native backends and owns its command runner. Its results share the update counter but have separate menu details.
 - Preserve independent source cancellation, last-known results, concise error messages and deduplicated diagnostic logs.
 

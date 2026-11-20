@@ -39,7 +39,6 @@ The shared backend monitors atomic replacements and changes of `/var/lib/dpkg/st
 - Held-back packages, upgrades requiring new dependencies, and packages deferred by Ubuntu's phased-update policy may not be included in the simulated `apt-get upgrade` plan.
 - The count is not a list of every newer remote candidate or a complete `full-upgrade` plan.
 - Snap and release upgrades are not counted.
-- Arch out-of-date reports and their preference are unavailable.
 - Nonstandard dpkg administrative directories are not monitored. Periodic checks still use APT configuration.
 - APT simulation runs without locks and is not an atomic transaction snapshot; unreadable private APT configuration can affect unprivileged queries.
 

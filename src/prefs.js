@@ -9,9 +9,9 @@ import {detectSystem, hasFlatpak} from './platform.js';
 
 export default class PackageUpdatesPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
-        const supportsOutdated = detectSystem().backendId === 'arch';
+        const supportsAur = detectSystem().backendId === 'arch';
         const supportsFlatpak = hasFlatpak();
-        window.set_default_size(480, supportsOutdated || supportsFlatpak ? 480 : 320);
+        window.set_default_size(480, supportsAur || supportsFlatpak ? 400 : 320);
         const settings = this.getSettings();
         // Retain settings for the lifetime of the preferences window.
         window._settings = settings;
@@ -56,14 +56,11 @@ export default class PackageUpdatesPreferences extends ExtensionPreferences {
             settings.bind('show-flatpak', flatpak, 'active', Gio.SettingsBindFlags.DEFAULT);
         }
 
-        if (supportsOutdated) {
+        if (supportsAur) {
             const aur = new Adw.SwitchRow({title: 'AUR updates'});
             polling.add(aur);
             settings.bind('show-aur', aur, 'active', Gio.SettingsBindFlags.DEFAULT);
 
-            const outdated = new Adw.SwitchRow({title: 'Outdated packages'});
-            polling.add(outdated);
-            settings.bind('show-outdated', outdated, 'active', Gio.SettingsBindFlags.DEFAULT);
         }
     }
 }

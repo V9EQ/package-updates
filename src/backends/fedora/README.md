@@ -46,7 +46,6 @@ Unprivileged DNF5 uses its user cache, normally `~/.cache/libdnf5`, and may clon
 - A cache-only check can fail until metadata is available; the previous count is kept rather than replaced with zero.
 - Counts follow DNF repository/exclude configuration and may differ from a subsequent solved transaction.
 - Firmware and Fedora release upgrades are not included.
-- Arch out-of-date reports and their preference are unavailable.
 
 ## References
 

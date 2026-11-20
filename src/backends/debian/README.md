@@ -38,7 +38,6 @@ The shared backend watches `/var/lib/dpkg/status` through its parent directory s
 
 - The count follows `apt-get upgrade`, not `dist-upgrade` or every newer candidate version. Held-back packages and upgrades requiring new dependencies are excluded.
 - Snap, firmware and distribution-release upgrades are not included.
-- Arch out-of-date reports and their preference are unavailable.
 - Nonstandard dpkg administrative directories are not monitored; scheduled APT queries still work according to APT configuration.
 - APT simulation does not lock the database. Concurrent package operations and unreadable private configuration can affect its view.
 

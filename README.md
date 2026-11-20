@@ -10,7 +10,6 @@ A GNOME Shell extension that shows package update counts for **Arch Linux, Ubunt
 - Rechecks after installed-package database changes.
 - Optional [Flatpak updates](src/backends/flatpak/README.md).
 - Optional Arch-only AUR update checks without helpers.
-- Optional Arch-only out-of-date package reports.
 - Last-known counts remain visible when a check fails.
 
 ## Compatibility
@@ -69,7 +68,6 @@ gnome-extensions prefs package-updates@v9eq.github.io
 - **Check interval (minutes):** 1–1440; default 30.
 - **Flatpak updates:** shown when Flatpak is installed; disabled by default. Includes apps and runtimes in the main count, with separate menu details.
 - **AUR updates:** Arch-based systems only; disabled by default. Includes AUR in the update count. Sends installed foreign package names to aur.archlinux.org.
-- **Outdated packages:** Arch-based systems only. Disabling it hides the out-of-date counter and reports action and cancels GitLab requests. Re-enabling starts a check immediately.
 
 System detection uses `ID`, then ordered `ID_LIKE` values from `os-release` through GLib. An installed package-manager executable alone does not select a backend. Settings changes take effect without restarting Shell.
 

@@ -2,14 +2,12 @@
 import GLib from 'gi://GLib';
 
 import {Monitor} from './monitor.js';
-import {OutdatedService} from './outdated.js';
 import {AurService} from './aur.js';
 
 export class ArchBackend {
     constructor(runner) {
         this._runner = runner;
         this.updatesTitle = 'Pacman updates';
-        this.outdated = new OutdatedService();
         this.aur = new AurService();
     }
 
@@ -57,6 +55,5 @@ export class ArchBackend {
 
     destroy() {
         this.aur.destroy();
-        this.outdated.destroy();
     }
 }
