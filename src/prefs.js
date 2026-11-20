@@ -10,7 +10,7 @@ import {detectSystem} from './platform.js';
 export default class PackageUpdatesPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const supportsOutdated = detectSystem().backendId === 'arch';
-        window.set_default_size(480, supportsOutdated ? 400 : 320);
+        window.set_default_size(480, supportsOutdated ? 480 : 320);
         const settings = this.getSettings();
         // Retain settings for the lifetime of the preferences window.
         window._settings = settings;
@@ -50,6 +50,13 @@ export default class PackageUpdatesPreferences extends ExtensionPreferences {
         settings.bind('refresh-interval', interval, 'value', Gio.SettingsBindFlags.DEFAULT);
 
         if (supportsOutdated) {
+            const aur = new Adw.SwitchRow({
+                title: 'AUR updates',
+                subtitle: 'Send installed foreign package names to aur.archlinux.org. Does not track new VCS commits.',
+            });
+            polling.add(aur);
+            settings.bind('show-aur', aur, 'active', Gio.SettingsBindFlags.DEFAULT);
+
             const outdated = new Adw.SwitchRow({title: 'Outdated packages'});
             polling.add(outdated);
             settings.bind('show-outdated', outdated, 'active', Gio.SettingsBindFlags.DEFAULT);

@@ -14,7 +14,9 @@ const PREVIEW_LIMIT = 15;
 
 export const UpdatesIndicator = GObject.registerClass({GTypeName: 'V9eqPackageUpdatesIndicator'},
 class UpdatesIndicator extends PanelMenu.Button {
-    _init(extension, refresh, {showOutdated = false, updatesTitle = 'Package updates', supported = true} = {}) {
+    _init(extension, refresh, {
+        showOutdated = false, showAur = false, updatesTitle = 'Package updates', supported = true,
+    } = {}) {
         super._init(0.5, extension.metadata.name);
         this._extension = extension;
         this._supported = supported;
@@ -25,6 +27,7 @@ class UpdatesIndicator extends PanelMenu.Button {
             style_class: 'package-updates-counters',
         });
         this._updatesLabel = this._addCounter(box, 'updates');
+        this._aurLabel = showAur ? this._addCounter(box, 'aur') : null;
         this._outdatedLabel = showOutdated ? this._addCounter(box, 'outdated') : null;
         this.add_child(box);
 
@@ -33,6 +36,7 @@ class UpdatesIndicator extends PanelMenu.Button {
             style_class: 'package-updates-heading',
         }));
         this._updates = this._addSection(updatesTitle);
+        this._aur = showAur ? this._addSection('AUR updates') : null;
         this._outdated = showOutdated ? this._addSection('Outdated packages') : null;
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._refreshItem = this.menu.addAction('Refresh now', refresh, 'view-refresh-symbolic');
@@ -129,7 +133,7 @@ class UpdatesIndicator extends PanelMenu.Button {
         }
     }
 
-    render(updates, outdated, refreshing) {
+    render({updates, outdated, aur}, refreshing) {
         const label = state => {
             if (state.items === null)
                 return state.error ? '!' : '…';
@@ -137,13 +141,18 @@ class UpdatesIndicator extends PanelMenu.Button {
         };
         this._updatesLabel.text = label(updates);
         this._renderSection(this._updates, updates, refreshing);
+        if (this._aur) {
+            this._aurLabel.text = label(aur);
+            this._renderSection(this._aur, aur, refreshing);
+        }
         if (this._outdated) {
             this._outdatedLabel.text = label(outdated);
             this._renderSection(this._outdated, outdated, refreshing);
         }
         this._refreshItem.setSensitive(this._supported && !refreshing);
         this._refreshItem.label.text = refreshing ? 'Checking packages…' : 'Refresh now';
-        const outdatedSummary = this._outdated ? `; ${this._outdated.summary.label.text}` : '';
-        this.accessible_name = `${this._extension.metadata.name}: ${this._updates.summary.label.text}${outdatedSummary}`;
+        const summaries = [this._updates, this._aur, this._outdated]
+            .filter(Boolean).map(section => section.summary.label.text);
+        this.accessible_name = `${this._extension.metadata.name}: ${summaries.join('; ')}`;
     }
 });

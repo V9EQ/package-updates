@@ -8,6 +8,7 @@ A GNOME Shell extension that shows package update counts for **Arch Linux, Ubunt
 - Configurable check interval; 30 minutes by default.
 - Left, center or right panel placement.
 - Rechecks after installed-package database changes.
+- Optional Arch-only AUR update checks, without `yay`, `paru` or additional dependencies.
 - Optional Arch-only out-of-date package reports.
 - Last-known counts remain visible when a check fails.
 
@@ -22,7 +23,7 @@ GNOME Shell **48–51** is required. Package backends target the following relea
 | Debian | 13 / trixie | APT | [Debian module](src/backends/debian/README.md) |
 | Fedora Workstation | 45 | DNF5 | [Fedora module](src/backends/fedora/README.md) |
 
-These targets are based on upstream documentation, not runtime verification on every distribution. Related distributions can use `ID_LIKE` fallback on a best-effort basis. Unsupported systems show **Unsupported system**, not a zero count. Fedora Atomic, rpm-ostree/bootc deployments, Snap, Flatpak and AUR updates are outside the supported scope.
+These targets are based on upstream documentation, not runtime verification on every distribution. Related distributions can use `ID_LIKE` fallback on a best-effort basis. Unsupported systems show **Unsupported system**, not a zero count. Fedora Atomic, rpm-ostree/bootc deployments, Snap and Flatpak are outside the supported scope. AUR checking is available only on Arch-based systems and is disabled by default.
 
 **Metadata freshness differs:** Arch refreshes a separate database; APT reads existing indexes maintained by the OS or administrator; DNF5 follows its metadata-expiration policy. Changing the check interval does not refresh APT indexes.
 
@@ -65,13 +66,16 @@ gnome-extensions prefs package-updates@v9eq.github.io
 
 - **Top bar position:** left, center or right.
 - **Check interval (minutes):** 1–1440; default 30.
-- **Outdated packages:** Arch-based systems only. Disabling it hides the second counter and reports action and cancels GitLab requests. Re-enabling starts a check immediately.
+- **AUR updates:** Arch-based systems only; disabled by default. Adds a separate counter and package preview. Enabling sends installed foreign package names (including private/local package names) to the official AUR API and starts a check immediately. Disabling hides the counter and cancels only AUR requests and commands. No AUR helper or extra dependency is needed.
+- **Outdated packages:** Arch-based systems only. Disabling it hides the out-of-date counter and reports action and cancels GitLab requests. Re-enabling starts a check immediately.
 
 System detection uses `ID`, then ordered `ID_LIKE` values from `os-release` through GLib. An installed package-manager executable alone does not select a backend. Settings changes take effect without restarting Shell.
 
 ## Counts and status
 
 The primary section is labelled **Pacman updates**, **APT updates** or **DNF updates**. Package previews show up to 15 entries; the counter includes the complete result.
+
+On Arch, **AUR updates** counts installed foreign packages whose published AUR version is newer according to pacman's `vercmp`. Foreign packages not found in AUR are excluded. The preview shows installed → available versions and links to AUR pages. This does **not** check new upstream commits for `*-git`/other VCS packages, resolve dependencies, or apply pacman's ignore rules. Pacman and AUR counts remain separate.
 
 On Arch, **Outdated packages** counts unique package bases with open `package::out-of-date` reports across Arch Linux repositories, not just installed packages. This indicates lag behind upstream, not necessarily an upgrade available through pacman. Arch reports are never queried on Ubuntu, Debian or Fedora.
 
@@ -88,9 +92,11 @@ Technical error details go to the journal. Repeated identical failures are logge
 
 ## Safety and resource use
 
-The extension does not install, remove or upgrade packages, run privileged commands, or alter repository, network or desktop configuration. APT checks are simulations and do not refresh system indexes. Arch and DNF5 may download repository metadata to user caches, never package archives.
+The extension does not install, remove or upgrade packages, run privileged commands, or alter repository, network or desktop configuration. APT checks are simulations and do not refresh system indexes. Arch and DNF5 may download repository metadata to user caches, never package archives. Optional AUR checks send batched HTTPS requests directly through the existing libsoup 3 dependency, without downloading or executing PKGBUILDs.
 
 Commands run asynchronously with a 120-second limit and a 5-second termination grace period. Source checks do not overlap. Database notifications are coalesced; Arch waits for its transaction lock, while APT/RPM notifications can occur during a long transaction and schedule another read after later writes. Disabling removes timers and file monitors, cancels HTTP requests and terminates outstanding commands.
+
+AUR metadata is kept only in memory after successful checks. Database-change recounts use that cache without HTTP. If a new foreign package has no cache entry, the result is marked stale until the next scheduled/manual refresh. The default 30-minute interval is recommended: AUR limits requests to 4000 per day per IP, which is shared with other clients on the same public IP.
 
 ## Build and repository layout
 
@@ -135,4 +141,4 @@ gnome-extensions uninstall package-updates@v9eq.github.io
 
 ## License
 
-Code: [GPL-2.0-or-later](LICENSE). Icons: [Lucide](https://lucide.dev/), under the terms in [icons/LICENSE](icons/LICENSE).
+Code: [GPL-2.0-or-later](LICENSE). Icons: [Lucide](https://lucide.dev/) and an original AUR package icon, under the terms in [icons/LICENSE](icons/LICENSE).
