@@ -71,23 +71,6 @@ gnome-extensions prefs package-updates@v9eq.github.io
 
 System detection uses `ID`, then ordered `ID_LIKE` values from `os-release` through GLib. An installed package-manager executable alone does not select a backend. Settings changes take effect without restarting Shell.
 
-## Counts and status
-
-The primary section is labelled **Pacman updates**, **APT updates** or **DNF updates**. Package previews show up to 15 entries; the counter includes the complete result. On Arch, the top-bar counter combines Pacman and enabled AUR updates; their details remain separate in the menu.
-
-On Arch, **Outdated packages** counts unique package bases with open `package::out-of-date` reports across Arch Linux repositories, not just installed packages. This indicates lag behind upstream, not necessarily an upgrade available through pacman. Arch reports are never queried on Ubuntu, Debian or Fedora.
-
-| Status | Meaning |
-| --- | --- |
-| `…` | No result yet |
-| `!` | Unavailable without an earlier result |
-| `*` after a count | Last-known count; the latest check failed |
-| `Sync failed` | No successful result is available |
-| `Sync failed · cached data` | Previous results are retained |
-| `Unsupported system` | No applicable backend is available |
-
-Technical error details go to the journal. Repeated identical failures are logged once per source until a check succeeds.
-
 ## Safety and resource use
 
 The extension does not install, remove or upgrade packages, run privileged commands, or alter repository, network or desktop configuration. APT checks are simulations and do not refresh system indexes. Arch and DNF5 may download repository metadata to user caches, never package archives.
