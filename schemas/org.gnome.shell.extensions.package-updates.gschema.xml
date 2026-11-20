@@ -11,6 +11,11 @@
       <summary>Top bar position</summary>
       <description>Place the indicator on the left, in the center or on the right of the top bar.</description>
     </key>
+    <key name="show-flatpak" type="b">
+      <default>false</default>
+      <summary>Flatpak updates</summary>
+      <description>Include Flatpak applications, runtimes and extensions in update checks when Flatpak is installed.</description>
+    </key>
     <key name="show-aur" type="b">
       <default>false</default>
       <summary>AUR updates</summary>
@@ -25,7 +30,7 @@
       <range min="1" max="1440"/>
       <default>30</default>
       <summary>Check interval in minutes</summary>
-      <description>How often to query package updates, enabled AUR updates and supported out-of-date reports.</description>
+      <description>How often to query package updates, enabled optional sources and supported out-of-date reports.</description>
     </key>
   </schema>
 </schemalist>

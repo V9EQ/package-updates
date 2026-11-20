@@ -1,9 +1,9 @@
 {
     "uuid": "package-updates@v9eq.github.io",
     "name": "Package Updates",
-    "description": "Show package updates on Arch Linux, Ubuntu, Debian and Fedora with automatic system detection. Configurable check interval and panel position. Optional Arch-only AUR update checks without helpers and out-of-date reports. Snap, Flatpak and image-based systems are not included.",
+    "description": "Show package updates on Arch Linux, Ubuntu, Debian and Fedora with automatic system detection. Configurable check interval and panel position. Optional Flatpak updates, Arch-only AUR checks and out-of-date reports. Snap and image-based system updates are not included.",
     "url": "https://github.com/V9EQ/package-updates",
     "shell-version": ["48", "49", "50", "51"],
     "settings-schema": "org.gnome.shell.extensions.package-updates",
-    "version-name": "2.1.0"
+    "version-name": "2.2.0"
 }

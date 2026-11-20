@@ -15,7 +15,8 @@ const PREVIEW_LIMIT = 15;
 export const UpdatesIndicator = GObject.registerClass({GTypeName: 'V9eqPackageUpdatesIndicator'},
 class UpdatesIndicator extends PanelMenu.Button {
     _init(extension, refresh, {
-        showOutdated = false, showAur = false, updatesTitle = 'Package updates', supported = true,
+        showOutdated = false, showAur = false, showFlatpak = false,
+        updatesTitle = 'Package updates', supported = true,
     } = {}) {
         super._init(0.5, extension.metadata.name);
         this._extension = extension;
@@ -36,6 +37,7 @@ class UpdatesIndicator extends PanelMenu.Button {
         }));
         this._updates = this._addSection(updatesTitle);
         this._aur = showAur ? this._addSection('AUR updates') : null;
+        this._flatpak = showFlatpak ? this._addSection('Flatpak updates') : null;
         this._outdated = showOutdated ? this._addSection('Outdated packages') : null;
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         this._refreshItem = this.menu.addAction('Refresh now', refresh, 'view-refresh-symbolic');
@@ -91,12 +93,12 @@ class UpdatesIndicator extends PanelMenu.Button {
             });
     }
 
-    _renderSection(widgets, state, refreshing) {
+    _renderSection(widgets, state, refreshing, supported = true) {
         const count = state.items === null ? '—' : `${state.items.length}`;
         widgets.summary.label.text = `${widgets.title}: ${count}`;
         widgets.status.remove_style_class_name('package-updates-error');
         widgets.status.label.opacity = state.error ? 255 : 140;
-        if (!this._supported) {
+        if (!supported) {
             widgets.status.label.text = 'Unsupported system';
             widgets.status.add_style_class_name('package-updates-error');
         } else if (state.error) {
@@ -132,7 +134,7 @@ class UpdatesIndicator extends PanelMenu.Button {
         }
     }
 
-    render({updates, outdated, aur}, refreshing) {
+    render({updates, outdated, aur, flatpak}, refreshing) {
         const label = (...states) => {
             const failed = states.some(state => state.error);
             if (states.some(state => state.items === null))
@@ -140,17 +142,24 @@ class UpdatesIndicator extends PanelMenu.Button {
             const count = states.reduce((sum, state) => sum + state.items.length, 0);
             return `${count}${failed ? '*' : ''}`;
         };
-        this._updatesLabel.text = this._aur ? label(updates, aur) : label(updates);
-        this._renderSection(this._updates, updates, refreshing);
+        const sources = this._supported ? [updates] : [];
+        if (this._aur)
+            sources.push(aur);
+        if (this._flatpak)
+            sources.push(flatpak);
+        this._updatesLabel.text = label(...(sources.length ? sources : [updates]));
+        this._renderSection(this._updates, updates, refreshing, this._supported);
         if (this._aur)
             this._renderSection(this._aur, aur, refreshing);
+        if (this._flatpak)
+            this._renderSection(this._flatpak, flatpak, refreshing);
         if (this._outdated) {
             this._outdatedLabel.text = label(outdated);
             this._renderSection(this._outdated, outdated, refreshing);
         }
-        this._refreshItem.setSensitive(this._supported && !refreshing);
+        this._refreshItem.setSensitive((this._supported || Boolean(this._flatpak)) && !refreshing);
         this._refreshItem.label.text = refreshing ? 'Checking packages…' : 'Refresh now';
-        const summaries = [this._updates, this._aur, this._outdated]
+        const summaries = [this._updates, this._aur, this._flatpak, this._outdated]
             .filter(Boolean).map(section => section.summary.label.text);
         this.accessible_name = `${this._extension.metadata.name}: ${summaries.join('; ')}`;
     }

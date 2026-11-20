@@ -5,12 +5,13 @@ import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
-import {detectSystem} from './platform.js';
+import {detectSystem, hasFlatpak} from './platform.js';
 
 export default class PackageUpdatesPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const supportsOutdated = detectSystem().backendId === 'arch';
-        window.set_default_size(480, supportsOutdated ? 480 : 320);
+        const supportsFlatpak = hasFlatpak();
+        window.set_default_size(480, supportsOutdated || supportsFlatpak ? 480 : 320);
         const settings = this.getSettings();
         // Retain settings for the lifetime of the preferences window.
         window._settings = settings;
@@ -48,6 +49,12 @@ export default class PackageUpdatesPreferences extends ExtensionPreferences {
         });
         polling.add(interval);
         settings.bind('refresh-interval', interval, 'value', Gio.SettingsBindFlags.DEFAULT);
+
+        if (supportsFlatpak) {
+            const flatpak = new Adw.SwitchRow({title: 'Flatpak updates'});
+            polling.add(flatpak);
+            settings.bind('show-flatpak', flatpak, 'active', Gio.SettingsBindFlags.DEFAULT);
+        }
 
         if (supportsOutdated) {
             const aur = new Adw.SwitchRow({title: 'AUR updates'});

@@ -8,6 +8,7 @@ A GNOME Shell extension that shows package update counts for **Arch Linux, Ubunt
 - Configurable check interval; 30 minutes by default.
 - Left, center or right panel placement.
 - Rechecks after installed-package database changes.
+- Optional [Flatpak updates](src/backends/flatpak/README.md).
 - Optional Arch-only AUR update checks without helpers.
 - Optional Arch-only out-of-date package reports.
 - Last-known counts remain visible when a check fails.
@@ -23,7 +24,7 @@ GNOME Shell **48–51** is required. Package backends target the following relea
 | Debian | 13 / trixie | APT | [Debian module](src/backends/debian/README.md) |
 | Fedora Workstation | 45 | DNF5 | [Fedora module](src/backends/fedora/README.md) |
 
-These targets are based on upstream documentation, not runtime verification on every distribution. Related distributions can use `ID_LIKE` fallback on a best-effort basis. Unsupported systems show **Unsupported system**, not a zero count. Fedora Atomic, rpm-ostree/bootc deployments, Snap and Flatpak are outside the supported scope.
+These targets are based on upstream documentation, not runtime verification on every distribution. Related distributions can use `ID_LIKE` fallback on a best-effort basis. Unsupported systems show **Unsupported system**, not a zero count. Native updates on Fedora Atomic/rpm-ostree/bootc deployments and Snap are outside the supported scope. Flatpak checks are independent of the native backend.
 
 **Metadata freshness differs:** Arch refreshes a separate database; APT reads existing indexes maintained by the OS or administrator; DNF5 follows its metadata-expiration policy. Changing the check interval does not refresh APT indexes.
 
@@ -66,6 +67,7 @@ gnome-extensions prefs package-updates@v9eq.github.io
 
 - **Top bar position:** left, center or right.
 - **Check interval (minutes):** 1–1440; default 30.
+- **Flatpak updates:** shown when Flatpak is installed; disabled by default. Includes apps and runtimes in the main count, with separate menu details.
 - **AUR updates:** Arch-based systems only; disabled by default. Includes AUR in the update count. Sends installed foreign package names to aur.archlinux.org.
 - **Outdated packages:** Arch-based systems only. Disabling it hides the out-of-date counter and reports action and cancels GitLab requests. Re-enabling starts a check immediately.
 

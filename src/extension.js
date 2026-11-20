@@ -13,6 +13,7 @@ export default class PackageUpdatesExtension extends Extension {
         this._service = new PackageService();
         this._showOutdated = this._service.supportsOutdated && this._settings.get_boolean('show-outdated');
         this._showAur = this._service.supportsAur && this._settings.get_boolean('show-aur');
+        this._showFlatpak = this._service.supportsFlatpak && this._settings.get_boolean('show-flatpak');
         this._updates = {
             items: null,
             error: this._service.supported ? null : this._service.system.reason,
@@ -23,12 +24,14 @@ export default class PackageUpdatesExtension extends Extension {
             console.warn(`${this.metadata.name}: ${this._updates.error}`);
         this._outdated = {items: null, error: null, updated: null, busy: false};
         this._aur = {items: null, error: null, updated: null, busy: false};
+        this._flatpak = {items: null, error: null, updated: null, busy: false};
         this._pendingLocalRefresh = new Set();
         this._settingsSignals = [
             this._settings.connect('changed::panel-position', () => this._placeIndicator()),
             this._settings.connect('changed::refresh-interval', () => this._startTimer()),
             this._settings.connect('changed::show-outdated', () => this._onOutdatedChanged()),
             this._settings.connect('changed::show-aur', () => this._onAurChanged()),
+            this._settings.connect('changed::show-flatpak', () => this._onFlatpakChanged()),
         ];
         this._placeIndicator();
         this._startTimer();
@@ -84,11 +87,24 @@ export default class PackageUpdatesExtension extends Extension {
             this._refreshSource('aur');
     }
 
+    _onFlatpakChanged() {
+        const showFlatpak = this._service.supportsFlatpak && this._settings.get_boolean('show-flatpak');
+        if (showFlatpak === this._showFlatpak)
+            return;
+        this._showFlatpak = showFlatpak;
+        this._service.cancelFlatpak();
+        this._flatpak = {items: null, error: null, updated: null, busy: false};
+        this._placeIndicator();
+        if (this._showFlatpak)
+            this._refreshSource('flatpak');
+    }
+
     _placeIndicator() {
         this._indicator?.destroy();
         this._indicator = new UpdatesIndicator(this, () => this._refresh(), {
             showOutdated: this._showOutdated,
             showAur: this._showAur,
+            showFlatpak: this._showFlatpak,
             updatesTitle: this._service.updatesTitle,
             supported: this._service.supported,
         });
@@ -109,15 +125,19 @@ export default class PackageUpdatesExtension extends Extension {
     }
 
     _render() {
-        this._indicator?.render({updates: this._updates, outdated: this._outdated, aur: this._aur},
-            this._updates.busy || (this._showOutdated && this._outdated.busy) ||
-            (this._showAur && this._aur.busy));
+        this._indicator?.render({
+            updates: this._updates, outdated: this._outdated, aur: this._aur, flatpak: this._flatpak,
+        }, this._updates.busy || (this._showOutdated && this._outdated.busy) ||
+            (this._showAur && this._aur.busy) || (this._showFlatpak && this._flatpak.busy));
     }
 
     _refresh() {
-        if (!this._service?.supported)
+        if (!this._service)
             return;
-        this._refreshSource('updates');
+        if (this._service.supported)
+            this._refreshSource('updates');
+        if (this._showFlatpak)
+            this._refreshSource('flatpak');
         if (this._showAur)
             this._refreshSource('aur');
         if (this._showOutdated)
@@ -125,8 +145,8 @@ export default class PackageUpdatesExtension extends Extension {
     }
 
     async _refreshSource(source, local = false) {
-        if (!this._service?.supported || (source === 'outdated' && !this._showOutdated) ||
-            (source === 'aur' && !this._showAur))
+        if (!this._service || (source === 'flatpak' ? !this._showFlatpak : !this._service.supported) ||
+            (source === 'outdated' && !this._showOutdated) || (source === 'aur' && !this._showAur))
             return;
         const service = this._service;
         const state = this[`_${source}`];
@@ -146,6 +166,8 @@ export default class PackageUpdatesExtension extends Extension {
                 items = await service.getOutdated();
             else if (source === 'aur')
                 items = await service.getAurUpdates({local});
+            else if (source === 'flatpak')
+                items = await service.getFlatpakUpdates();
             else
                 items = await (local ? service.getLocalUpdates() : service.getUpdates());
             // Ignore results from a previous enable cycle or feature setting.
@@ -193,8 +215,10 @@ export default class PackageUpdatesExtension extends Extension {
         this._updates = null;
         this._outdated = null;
         this._aur = null;
+        this._flatpak = null;
         this._showOutdated = false;
         this._showAur = false;
+        this._showFlatpak = false;
         this._pendingLocalRefresh = null;
     }
 }

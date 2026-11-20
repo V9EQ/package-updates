@@ -45,7 +45,7 @@ Unprivileged DNF5 uses its user cache, normally `~/.cache/libdnf5`, and may clon
 - Image-based Fedora systems, DNF4-only installations and legacy non-SQLite RPM databases are outside this backend's scope.
 - A cache-only check can fail until metadata is available; the previous count is kept rather than replaced with zero.
 - Counts follow DNF repository/exclude configuration and may differ from a subsequent solved transaction.
-- Flatpak, firmware and Fedora release upgrades are not included.
+- Firmware and Fedora release upgrades are not included.
 - Arch out-of-date reports and their preference are unavailable.
 
 ## References
