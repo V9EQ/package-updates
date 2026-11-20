@@ -19,6 +19,11 @@ class UpdatesIndicator extends PanelMenu.Button {
         super._init(0.5, extension.metadata.name);
         this._extension = extension;
         this._supported = supported;
+        this._uriCancellable = new Gio.Cancellable();
+        this.connect('destroy', () => {
+            this._uriCancellable.cancel();
+            this._extension = null;
+        });
         this.menu.actor.add_style_class_name('package-updates-menu');
 
         const box = new St.BoxLayout({
@@ -75,12 +80,20 @@ class UpdatesIndicator extends PanelMenu.Button {
     }
 
     _openUri(uri) {
+        // Only locally constructed AUR package links may reach an external handler.
+        if (!/^https:\/\/aur\.archlinux\.org\/packages\/(?:[a-zA-Z0-9_.-]|%40|%2B)+$/.test(uri))
+            return;
+        const cancellable = this._uriCancellable;
+        if (cancellable.is_cancelled() || !this._extension)
+            return;
+        const name = this._extension.metadata.name;
         Gio.AppInfo.launch_default_for_uri_async(uri, global.create_app_launch_context(0, -1),
-            null, (source, result) => {
+            cancellable, (source, result) => {
                 try {
                     Gio.AppInfo.launch_default_for_uri_finish(result);
                 } catch (error) {
-                    console.error(`${this._extension.metadata.name}: could not open link: ${error.message}`);
+                    if (!cancellable.is_cancelled())
+                        console.error(`${name}: could not open link: ${error.message.slice(0, 512)}`);
                 }
             });
     }

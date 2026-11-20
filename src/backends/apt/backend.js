@@ -39,6 +39,8 @@ export class AptBackend {
                 throw new Error('Unsupported APT simulation package format.');
             }
             const [, name, installed, candidate] = match;
+            if ([name, installed, candidate].some(value => value.length > 256 || !/^[!-~]+$/.test(value)))
+                throw new Error('APT returned invalid package data.');
             packages.set(name, {name, detail: `${name} ${installed} → ${candidate}`});
         }
         const summary = /^(\d+) upgraded, \d+ newly installed, \d+ to remove and \d+ not upgraded\./m.exec(stdout);

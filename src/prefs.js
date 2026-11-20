@@ -27,14 +27,19 @@ export default class PackageUpdatesPreferences extends ExtensionPreferences {
             selected: positions.indexOf(settings.get_string('panel-position')),
         });
         appearance.add(position);
-        position.connect('notify::selected', () => {
+        const selectedId = position.connect('notify::selected', () => {
             settings.set_string('panel-position', positions[position.selected]);
         });
-        const positionId = settings.connect('changed::panel-position', () => {
+        let positionId = settings.connect('changed::panel-position', () => {
             position.selected = positions.indexOf(settings.get_string('panel-position'));
         });
         window.connect('close-request', () => {
-            settings.disconnect(positionId);
+            if (positionId) {
+                settings.disconnect(positionId);
+                position.disconnect(selectedId);
+                positionId = 0;
+            }
+            window._settings = null;
             return false;
         });
 

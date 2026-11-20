@@ -75,7 +75,7 @@ System detection uses `ID`, then ordered `ID_LIKE` values from `os-release` thro
 
 The extension does not install, remove or upgrade packages, run privileged commands, or alter repository, network or desktop configuration. APT checks are simulations and do not refresh system indexes. Arch and DNF5 may download repository metadata to user caches, never package archives.
 
-Commands run asynchronously with a 120-second limit and a 5-second termination grace period. Source checks do not overlap. Database notifications are coalesced; Arch waits for its transaction lock, while APT/RPM notifications can occur during a long transaction and schedule another read after later writes. Disabling removes timers and file monitors, cancels HTTP requests and terminates outstanding commands.
+Commands run asynchronously with a 120-second limit and a 5-second termination grace period. Output is capped at 8 MiB per command and 4 MiB per AUR response. AUR sessions close after each scan; HTTP redirects are refused. Source checks do not overlap. Database notifications are coalesced; Arch waits for its transaction lock, while APT/RPM notifications can occur during a long transaction and schedule another read after later writes. Disabling removes timers and file monitors, cancels HTTP requests and terminates outstanding commands.
 
 ## Build and repository layout
 

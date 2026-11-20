@@ -7,8 +7,20 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {UpdatesIndicator} from './indicator.js';
 import {PackageService} from './services.js';
 
+const errorDetail = error => String(error?.message || error).slice(0, 512)
+    .replace(/[\x00-\x1f\x7f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, ' ');
+
 export default class PackageUpdatesExtension extends Extension {
     enable() {
+        try {
+            this._enable();
+        } catch (error) {
+            this.disable();
+            throw error;
+        }
+    }
+
+    _enable() {
         this._settings = this.getSettings();
         this._service = new PackageService();
         this._showAur = this._service.supportsAur && this._settings.get_boolean('show-aur');
@@ -24,12 +36,14 @@ export default class PackageUpdatesExtension extends Extension {
         this._aur = {items: null, error: null, updated: null, busy: false};
         this._flatpak = {items: null, error: null, updated: null, busy: false};
         this._pendingLocalRefresh = new Set();
-        this._settingsSignals = [
-            this._settings.connect('changed::panel-position', () => this._placeIndicator()),
-            this._settings.connect('changed::refresh-interval', () => this._startTimer()),
-            this._settings.connect('changed::show-aur', () => this._onAurChanged()),
-            this._settings.connect('changed::show-flatpak', () => this._onFlatpakChanged()),
-        ];
+        this._settingsSignals = [];
+        for (const [key, callback] of [
+            ['panel-position', () => this._placeIndicator()],
+            ['refresh-interval', () => this._startTimer()],
+            ['show-aur', () => this._onAurChanged()],
+            ['show-flatpak', () => this._onFlatpakChanged()],
+        ])
+            this._settingsSignals.push(this._settings.connect(`changed::${key}`, callback));
         this._placeIndicator();
         this._startTimer();
         this._watchPackageChanges();
@@ -42,6 +56,8 @@ export default class PackageUpdatesExtension extends Extension {
             return;
         try {
             const monitor = await service.watchChanges(() => {
+                if (this._service !== service)
+                    return;
                 this._refreshSource('updates', true);
                 if (this._showAur)
                     this._refreshSource('aur', true);
@@ -53,7 +69,7 @@ export default class PackageUpdatesExtension extends Extension {
             this._monitor = monitor;
         } catch (error) {
             if (this._service === service)
-                console.warn(`${this.metadata.name}: database monitoring unavailable: ${error.message}`);
+                console.warn(`${this.metadata.name}: database monitoring unavailable: ${errorDetail(error)}`);
         }
     }
 
@@ -100,6 +116,7 @@ export default class PackageUpdatesExtension extends Extension {
     _startTimer() {
         if (this._timer)
             GLib.Source.remove(this._timer);
+        this._timer = 0;
         this._timer = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT,
             this._settings.get_int('refresh-interval') * 60, () => {
                 this._refresh();
@@ -160,7 +177,7 @@ export default class PackageUpdatesExtension extends Extension {
                 return;
             // Keep technical details out of the menu. Log each distinct failure
             // once per source until a successful check clears the error.
-            const detail = error?.message || String(error);
+            const detail = errorDetail(error);
             if (state.error !== detail)
                 console.warn(`${this.metadata.name}: ${source} sync failed: ${detail}`);
             // Keep the last successful result, clearly marked as stale.

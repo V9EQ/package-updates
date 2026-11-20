@@ -6,13 +6,14 @@ export class Monitor {
     constructor(databasePath, onChanged) {
         this._onChanged = onChanged;
         this._dirty = false;
+        this._destroyed = false;
         this._timer = 0;
         this._monitors = [];
         const database = Gio.File.new_for_path(databasePath);
         this._lock = database.get_child('db.lck');
         try {
             this._watch(database, (_monitor, file) => {
-                if (file.get_basename() === 'db.lck' && this._dirty)
+                if (file?.get_basename() === 'db.lck' && this._dirty)
                     this._schedule();
             });
             this._watch(database.get_child('local'), () => {
@@ -29,11 +30,16 @@ export class Monitor {
 
     _watch(file, callback) {
         const monitor = file.monitor_directory(Gio.FileMonitorFlags.WATCH_MOVES, null);
-        const id = monitor.connect('changed', callback);
+        const id = monitor.connect('changed', (...args) => {
+            if (!this._destroyed)
+                callback(...args);
+        });
         this._monitors.push({monitor, id});
     }
 
     _schedule() {
+        if (this._destroyed)
+            return;
         if (this._timer)
             GLib.Source.remove(this._timer);
         // Coalesce per-package events and allow the database lock to disappear.
@@ -49,6 +55,9 @@ export class Monitor {
     }
 
     destroy() {
+        if (this._destroyed)
+            return;
+        this._destroyed = true;
         if (this._timer)
             GLib.Source.remove(this._timer);
         this._timer = 0;

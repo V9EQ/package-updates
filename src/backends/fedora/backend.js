@@ -29,9 +29,9 @@ export class FedoraBackend {
             if (!Array.isArray(rows))
                 throw new Error('Invalid DNF5 JSON section.');
             for (const row of rows) {
-                if (!row || typeof row.name !== 'string' || !row.name ||
-                    typeof row.arch !== 'string' || !row.arch ||
-                    typeof row.evr !== 'string' || !row.evr)
+                if (!row || typeof row.name !== 'string' || !/^[a-zA-Z0-9_+.-]{1,255}$/.test(row.name) ||
+                    typeof row.arch !== 'string' || !/^[a-zA-Z0-9_]{1,32}$/.test(row.arch) ||
+                    typeof row.evr !== 'string' || !/^[!-~]{1,256}$/.test(row.evr))
                     throw new Error('Invalid DNF5 package record.');
                 const name = `${row.name}.${row.arch}`;
                 // The same candidate can appear in upgrades and obsoletes.
