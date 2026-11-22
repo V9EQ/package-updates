@@ -50,6 +50,13 @@ unzip -l dist/package-updates@v9eq.github.io.shell-extension.zip
 
 Do not change desktop/network settings, launch an extra GNOME Shell session, or install packages without explicit permission. Commit each completed implementation stage separately. Do not amend published commits or push without an explicit request.
 
+## Versioning
+
+Update `version-name` in [`src/metadata.json`](src/metadata.json) once per release:
+
+- **Small updates** (bug fixes and minor adjustments): increment the patch number (`+0.0.1`), e.g. `2.3.0` → `2.3.1`.
+- **Large updates** (new features and substantial changes): increment the minor number and reset the patch number to zero (`+0.1.0`), e.g. `2.3.1` → `2.4.0`.
+
 ## Compatibility and packaging
 
 Keep UUID `package-updates@v9eq.github.io` and the `/org/gnome/shell/extensions/package-updates/` schema path unless a further migration is explicitly approved. Resource directories may live outside `src/` in the repository, but installed `icons/` and `schemas/` must remain at archive root. The Makefile stages runtime files under `.build/extension`; generated files are ignored.
