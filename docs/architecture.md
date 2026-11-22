@@ -6,7 +6,7 @@ Documentation reviewed on 2026-11-16. This is a source-based compatibility targe
 
 | Distribution | Current release reference | Package interface | Metadata policy |
 | --- | --- | --- | --- |
-| Arch Linux | Rolling release | `checkupdates`, `pacman` | Separate checkupdates database; read-only local query after transactions |
+| Arch Linux | Rolling release | `checkupdates`, `pacman` | Separate checkupdates database; read-only cached query after logged upgrades |
 | Ubuntu | 26.10; 26.04 LTS | `apt-get --simulate upgrade` | Read existing system indexes; never run privileged index refresh |
 | Debian | 13 (trixie), currently 13.7 | `apt-get --simulate upgrade` | Same APT implementation as Ubuntu |
 | Fedora Workstation | 45 | DNF5 structured update query | Unprivileged DNF metadata cache; cache-only query after database changes |
@@ -21,7 +21,7 @@ The project is **Package Updates** at [V9EQ/package-updates](https://github.com/
 - `command.js`: one cancellable, timeout-bounded command runner. No shell interpolation, elevated privileges or package-changing commands.
 - `backends/arch`, `backends/ubuntu`, `backends/debian`, `backends/fedora`: distribution adapters with the same public methods and README format. Ubuntu and Debian share an APT implementation under `backends/apt`.
 - `services.js`: select the adapter and expose a common service interface to the Shell.
-- `monitor.js`: shared debounced database-change notifications where appropriate. Arch retains lock-aware transaction completion handling. Persistent APT/RPM lock files must not be treated like pacman's removable `db.lck`.
+- `monitor.js`: shared debounced database-change notifications where appropriate. Arch waits for `db.lck` to disappear and checks the pacman log for upgrades. Persistent APT/RPM lock files must not be treated like pacman's removable `db.lck`.
 - Opt-in AUR updates are an **Arch-only capability**.
 - The optional Flatpak source is independent of native backends and owns its command runner. Its results share the update counter but have separate menu details.
 - Preserve independent source cancellation, last-known results, concise error messages and deduplicated diagnostic logs.

@@ -7,7 +7,7 @@ A GNOME Shell extension that shows package update counts for **Arch Linux, Ubunt
 - Update counts and package previews in the top bar.
 - Configurable check interval; 30 minutes by default.
 - Left, center or right panel placement.
-- Rechecks after installed-package database changes.
+- Rechecks after package upgrades on Arch or installed-package database changes on APT/RPM.
 - Optional [Flatpak updates](src/backends/flatpak/README.md).
 - Optional Arch-only AUR update checks without helpers.
 - Last-known counts remain visible when a check fails.

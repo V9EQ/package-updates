@@ -7,13 +7,24 @@ import {AurService} from './aur.js';
 export class ArchBackend {
     constructor(runner) {
         this._runner = runner;
+        this._cacheDatabase = GLib.build_filenamev([
+            GLib.get_user_cache_dir(), 'package-updates', 'checkupdates',
+        ]);
         this.updatesTitle = 'Pacman updates';
         this.aur = new AurService();
     }
 
     async getUpdates({local = false} = {}) {
         if (local) {
-            const {stdout, stderr, status} = await this._runner.run(['pacman', '--color', 'never', '-Qu']);
+            // Read the same repository metadata that produced the displayed
+            // count, not pacman's potentially stale system sync database.
+            for (const directory of ['local', 'sync']) {
+                if (!GLib.file_test(GLib.build_filenamev([this._cacheDatabase, directory]), GLib.FileTest.IS_DIR))
+                    throw new Error('checkupdates database is not cached; refresh now.');
+            }
+            const {stdout, stderr, status} = await this._runner.run([
+                'pacman', '--color', 'never', '-Qu', '--dbpath', this._cacheDatabase,
+            ]);
             if (status === 1 && !stdout.trim() && !stderr.trim())
                 return [];
             if (status !== 0 || stderr.trim())
@@ -22,11 +33,8 @@ export class ArchBackend {
         }
         if (!GLib.find_program_in_path('checkupdates'))
             throw new Error('Install pacman-contrib to provide checkupdates.');
-        const database = GLib.build_filenamev([
-            GLib.get_user_cache_dir(), 'package-updates', 'checkupdates',
-        ]);
         const {stdout, stderr, status} = await this._runner.run(
-            ['checkupdates', '--nocolor'], {CHECKUPDATES_DB: database});
+            ['checkupdates', '--nocolor'], {CHECKUPDATES_DB: this._cacheDatabase});
         if (status === 2 && !stdout.trim() && !stderr.trim())
             return [];
         if (status !== 0 || stderr.trim())
@@ -47,16 +55,17 @@ export class ArchBackend {
         return [...packages.values()].sort((a, b) => a.name.localeCompare(b.name));
     }
 
-    async getDatabasePath() {
-        const {stdout, stderr, status} = await this._runner.run(['pacman-conf', 'DBPath']);
+    async _getPath(directive) {
+        const {stdout, stderr, status} = await this._runner.run(['pacman-conf', directive]);
         const path = stdout.trim();
-        if (status !== 0 || !GLib.path_is_absolute(path))
-            throw new Error(stderr.trim() || 'Could not determine the pacman database path.');
+        if (status !== 0 || stderr.trim() || path.includes('\n') || !GLib.path_is_absolute(path))
+            throw new Error(stderr.trim() || `Could not determine pacman ${directive}.`);
         return path;
     }
 
     async watchChanges(onChanged) {
-        return new Monitor(await this.getDatabasePath(), onChanged);
+        const [database, log] = await Promise.all([this._getPath('DBPath'), this._getPath('LogFile')]);
+        return new Monitor(database, log, onChanged);
     }
 
     destroy() {
